@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three pre-auth memory corruption bugs in Windows wsdapi.dll — 1dotq</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<header>
+  <h1><span>//</span> 1dotq</h1>
+  <p>vulnerability research &amp; low-level Windows internals</p>
+  <nav>
+    <a href="../index.html">posts</a>
+    <a href="mailto:quintinm1@gmail.com">contact</a>
+    <a href="https://github.com/1dotq" target="_blank">github</a>
+  </nav>
+</header>
+
+<article>
+<div class="post-header">
+  <h1>Three pre-auth memory corruption bugs in Windows wsdapi.dll</h1>
+  <div class="meta">
+    2026-05-19 &nbsp;&mdash;&nbsp; Windows 11 24H2 (Build 26100.8115) &nbsp;&mdash;&nbsp; FDResPub / TCP 5357
+  </div>
+  <div class="tags" style="margin-top:10px;">
+    <span>windows</span>
+    <span>wsdapi</span>
+    <span>pre-auth</span>
+    <span>uaf</span>
+    <span>memory-corruption</span>
+  </div>
+</div>
+
+<div class="post-body">
+
+<table style="width:100%;border-collapse:collapse;margin-bottom:32px;font-size:0.82rem;">
+  <thead>
+    <tr style="border-bottom:1px solid #2a2a2a;">
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Bug</th>
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Type</th>
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Vector</th>
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Impact</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;">Bug 1</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Use-After-Free</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">WS-Discovery SOAP</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">RCE (controlled vtable dispatch)</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;">Bug 2</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Stack Overflow</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">HTTP Pipelining</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Remote DoS / Potential RCE</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 10px;color:#5af;">Bug 3</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Race Condition</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Session Management</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Remote DoS / Info Leak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  I spent a few weeks digging into the WS-Discovery stack on Windows and found
+  three distinct memory corruption bugs in <code>wsdapi.dll</code>, all triggerable
+  from the network before any authentication. The target service is
+  <strong>FDResPub</strong> (Function Discovery Resource Publication), which runs
+  inside <code>svchost.exe</code> and listens on TCP port 5357 by default on Windows 11.
+  No credentials. No user interaction. Just a socket.
+</p>
+
+<p>
+  I'm writing this up because the research process itself is worth documenting —
+  the non-invasive CDB technique, the heap spray logic, how I proved controlled
+  vtable dispatch without writing a single byte of shellcode. The bugs themselves
+  were confirmed on Windows 11 24H2, Build 26100.8115.
+</p>
+
+
+<h2>Setup</h2>
+
+<p>
+  My lab target was a Windows 11 24H2 VM on Proxmox. The attack machine is Kali
+  on the same /24. FDResPub starts automatically; you can verify it's running with:
+</p>
+
+<pre>sc.exe queryex FDResPub</pre>
+
+<p>
+  Port 5357 is the WSD HTTP endpoint. You can confirm it's alive with any TCP
+  connection — it speaks HTTP/1.1 and expects SOAP envelopes. The protocol is
+  WS-Discovery (WSD), defined in the OASIS spec, used by Windows for network
+  device announcement and discovery.
+</p>
+
+<p>
+  For crash capture I configured the target with kernel dump enabled and
+  <code>AutoReboot = 0</code> so the system doesn't restart before the dump
+  writes. For user-mode crashes, Windows Error Reporting drops a minidump in
+  <code>%LOCALAPPDATA%\CrashDumps</code> automatically.
+</p>
+
+<p>
+  The key tool is CDB (the command-line WinDbg) in non-invasive mode. The
+  <code>-pv</code> flag attaches without suspending the target process, so
+  FDResPub keeps running and accepting connections while you're attached.
+  That matters because some bugs only trigger under concurrent load.
+</p>
+
+<pre>cdb.exe -pv -p &lt;PID&gt;</pre>
+
+<p>
+  I automated the PID resolution and module base address lookup over SSH using a
+  Python script (specter_brain / specter_agent) so I could run CDB commands from
+  Kali without touching the Windows desktop.
+</p>
+
+
+<h2>Bug 1 — Use-After-Free with controlled vtable dispatch</h2>
+
+<p>
+  This one took the longest to understand. The crash shows up as a CFG violation
+  (<code>STATUS_STACK_BUFFER_OVERRUN 0xC0000409</code>) rather than a typical
+  access violation, which is the CFG mitigation kicking in after wsdapi dispatches
+  a vtable call through a freed COM object.
+</p>
+
+<p>
+  The faulting offset is <code>wsdapi+0x50e5c</code>. What's happening there:
+  the code calls a method on a COM object (<code>CWSDXMLReader</code>) but
+  the object has already been freed. The <code>AddRef</code> that should pin
+  the object before the call is missing — classic refcount bug. After free,
+  the vtable pointer at offset 0 of the object points into whatever replaced
+  the allocation. When CFG validates the dispatch target against its bitmap,
+  it fails and terminates the process.
+</p>
+
+<p>
+  The crash dump confirms this. The RSI register holds the freed object's address:
+</p>
+
+<pre>rsi = 0x0000021eb4853070   ; freed CWSDXMLReader
+[rsi+0] = vtable ptr       ; now pointing at LFH fill (0xfeeefeee region)
+call [vtable+0x30]          ; vtable[6] dispatch → CFG violation</pre>
+
+<p>
+  Without any spray, the freed memory gets filled with the default LFH pattern
+  (<code>0xfeeefeee</code>), and <code>ntdll+0x4cd90</code> ends up in the vtable
+  slot. CFG rejects that target and crashes.
+</p>
+
+<p>
+  The spray is straightforward. <code>CWSDXMLReader</code> is 768 bytes (0x300),
+  solidly within LFH territory (the modern Segment Heap LFH handles up to 16 KB).
+  I hold a set of partial SOAP probe requests open with an oversized
+  <code>Content-Length</code> header — this pins live <code>CWSDXMLReader</code>
+  allocations in the heap — then cycle them to reclaim freed slots with controlled
+  content.
+</p>
+
+<p>
+  I don't need shellcode to prove this is exploitable. I set a breakpoint at
+  <code>wsdapi+0xf7a5</code> — a valid function entry point that lives in the CFG
+  bitmap, so dispatching to it won't trigger the CFG check — using CDB:
+</p>
+
+<pre>bu 0x00007ffd895ff7a5 ".echo ==UAF_VTABLE6_CONTROLLED==; r rcx rdx r8 rsi; gc"</pre>
+
+<p>
+  The hardcoded address is from my lab — <code>0x00007ffd895ff7a5</code> is
+  wsdapi base + 0xf7a5 on my build. Resolve the base for your version with
+  <code>lm m wsdapi</code> in CDB and add 0xf7a5 to get the correct address.
+</p>
+
+<p>
+  With the spray active, that breakpoint hits 30 out of 30 attempts. Without
+  the spray, the process crashes every time. That's proof of controlled vtable
+  dispatch — an attacker who fills those 768-byte slots with a crafted fake
+  vtable gets a PC-control primitive.
+</p>
+
+
+<h2>Bug 2 — Stack buffer overflow (GS cookie violation)</h2>
+
+<p>
+  This one is noisier and easier to trigger. The crash code is
+  <code>0xC000071C</code> (GS stack cookie check failure) at
+  <code>wsdapi+0xa6b78</code>. Four crashes in the Event Log across a single
+  fuzzing session.
+</p>
+
+<p>
+  The trigger is HTTP pipelining at volume. FDResPub handles multiple HTTP
+  requests per connection, and when you pipeline enough requests with
+  specific body sizes, the stack frame at <code>+0xa6b78</code> gets smashed.
+  I used a 1MB SOAP SUBSCRIBE body with Transfer-Encoding chunked to hold
+  connections open, combined with a burst of concurrent pipelined probes on
+  separate connections.
+</p>
+
+<p>
+  The GS cookie check means the overflow reaches the cookie before the return
+  address, which triggers the fast-fail. The process terminates before returning.
+  The DoS is guaranteed and reliable — you don't need to win any timing race or
+  get heap layout right, just pipeline enough requests and the service dies.
+  Turning it into RCE is non-trivial because the cookie fires before you control
+  the return address, but the primitive is there if you can bypass or brute-force
+  the cookie. I stopped at DoS — that's sufficient proof for reporting.
+</p>
+
+
+<h2>Bug 3 — Lock-free session list UAF (AV read)</h2>
+
+<p>
+  The third bug is a race condition in the session list management code around
+  <code>wsdapi+0x23e45</code>. The fault address is
+  <code>0xfffffffffffffff1</code> — that's <code>-15</code> sign-extended to 64
+  bits, which is what you get when a session lookup fails and returns an NTSTATUS
+  or HRESULT error code, and the caller uses that return value directly as a
+  pointer without checking it first.
+</p>
+
+<p>
+  The trigger is concurrent session creation and destruction. I open N
+  connections, synchronize them to close simultaneously (using a Python
+  threading barrier), and interleave that with new incoming connections.
+  The race window is narrow but reproducible — four crashes across the
+  session, all showing the same fault address pattern.
+</p>
+
+<pre>; wsdapi+0x23e45 (AV read)
+; rax = 0xfffffffffffffff1  ; -15 sign-extended — failed lookup returned as pointer
+mov rax, [rax+8]            ; → access violation read</pre>
+
+<p>
+  The <code>0xfffffffffffffff1</code> address is consistent across crashes, which
+  tells me it's not random noise — the same failed lookup produces the same
+  sign-extended value every time, just at the wrong moment in the race. That kind
+  of consistency is useful; it means you have a real window to work with, not a
+  one-in-a-million timing fluke.
+</p>
+
+
+<h2>Proof approach</h2>
+
+<p>
+  For each bug I wanted proof that didn't require shellcode. CDB non-invasive
+  mode is the key tool here. You attach without suspending the process, set
+  a conditional breakpoint at a location you've reasoned the CPU will reach
+  if the bug is triggered, and log register state. If the breakpoint fires
+  with the right register values, that's forensic proof of the code path.
+</p>
+
+<p>
+  The hardest part of this kind of research when you're working alone is staying
+  disciplined about what you've actually proven vs. what you're assuming. The UAF
+  vtable dispatch is proven — 30/30 breakpoints firing is not coincidence.
+  The GS overflow is proven — four Event Log entries with the same crash
+  offset is not coincidence. The race condition UAF is proven — the
+  deterministic fault address tells you exactly what the code is doing wrong.
+</p>
+
+<p>
+  What I didn't prove is post-exploitation. I'm not going to, and I don't
+  need to for research purposes. Controlled vtable dispatch at a CFG-valid target
+  with register state pointing at attacker data is the demonstration.
+</p>
+
+
+<h2>The tooling</h2>
+
+<p>
+  Everything ran from Kali over SSH. The Windows-side component
+  (<code>specter_agent.py</code>) is a lightweight HTTP server wrapping CDB,
+  exposing endpoints for running commands against a live process:
+</p>
+
+<pre>GET  /context?pid=&lt;pid&gt;           # lm, !peb, general state
+POST /command?pid=&lt;pid&gt;          # arbitrary CDB command
+GET  /discover?dll=wsdapi         # resolve base address</pre>
+
+<p>
+  The Kali side (<code>specter_brain.py</code>) coordinates the attack traffic,
+  CDB commands, and crash detection. Both are sitting in the repo if you want
+  to look at them.
+</p>
+
+
+<h2>Target environment</h2>
+
+<ul>
+  <li>Windows 11 24H2, Build 26100.8115</li>
+  <li>wsdapi.dll version 10.0.26100.1 — same version shipped with 24H2 RTM,
+      unchanged by subsequent LCUs; supports the "old code, low attention" angle</li>
+  <li>FDResPub (svchost.exe), default configuration</li>
+  <li>Port 5357 is open on Private and Domain network profiles by default; in
+      corporate environments, GPOs for printer and device discovery frequently
+      force workstations onto Domain profile permanently — making every machine
+      on the LAN reachable without any user action</li>
+  <li>Attacker: any machine with TCP access to port 5357 — same subnet is enough</li>
+</ul>
+
+
+<h2>Final note</h2>
+
+<p>
+  Three distinct pre-auth memory corruption bugs in one service, one attack
+  surface, no credentials required. The WSD stack is old code that hasn't gotten
+  a lot of attention from the research community, and it shows. If you're looking
+  for a place to dig, FDResPub and the broader Function Discovery infrastructure
+  are worth your time.
+</p>
+
+<p>
+  I'll write up the spray technique in more detail in a follow-up post —
+  the HOLD+RECLAIM approach for LFH buckets specifically, since most spray
+  write-ups gloss over the details of how you keep slots pinned long enough to
+  do anything useful with them.
+</p>
+
+</div>
+</article>
+
+<footer>
+  1dotq &mdash; independent security research
+</footer>
+
+</body>
+</html>
