@@ -22,6 +22,18 @@
   <ul class="post-list">
 
     <li>
+      <div class="date">2026-06-01</div>
+      <a class="title" href="posts/lanman-thread-leak.html">
+        LanmanServer thread leak: authenticated RPC cycling to DoS
+      </a>
+      <div class="excerpt">
+        Worker threads in srvsvc.dll leak on disconnect. 500 cycles in 25 seconds
+        raises thread count from ~50 to thousands; they never reclaim. EventID 7011,
+        full SMB stack unavailable. VULN-182585, no CVE.
+      </div>
+    </li>
+
+    <li>
       <div class="date">2026-05-19</div>
       <a class="title" href="posts/wsdapi-uaf.html">
         Three pre-auth memory corruption bugs in Windows wsdapi.dll

