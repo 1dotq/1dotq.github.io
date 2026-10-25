@@ -32,6 +32,10 @@ nav a:hover { color: #5af; }
 .post-list { list-style: none; }
 .post-list li { margin-bottom: 32px; border-left: 2px solid #1e1e1e; padding-left: 16px; }
 .post-list li:hover { border-left-color: #5af; }
+.post-list li.featured-post { border-left-color: #5af; }
+.post-list li.featured-post .title { color: #eee; }
+.post-list .featured-label { color: #5af; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 12px; }
+
 .post-list .date { color: #444; font-size: 0.8rem; margin-bottom: 4px; }
 .post-list .title { font-size: 1.05rem; color: #ddd; }
 .post-list .excerpt { color: #666; font-size: 0.85rem; margin-top: 4px; }
