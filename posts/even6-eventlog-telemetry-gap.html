@@ -64,6 +64,10 @@
     <td>Windows Event Log service (<code>wevtsvc.dll</code>)</td>
   </tr>
   <tr>
+    <td>Successfully tested operating systems</td>
+    <td>Windows 11 24H2, Windows 11 Insider Canary, and Windows Server 2025 (lab environments)</td>
+  </tr>
+  <tr>
     <td>Relevant interface</td>
     <td>MS-EVEN6 / <code>EvtRpcRegisterLogQuery</code></td>
   </tr>
@@ -93,7 +97,7 @@
   <p>The investigation also raised an authorization-ordering question. In one set of tests, an ordinary query received an access-denied response for a channel, while a malformed query targeted at that channel caused service termination. This is <strong>consistent with some query processing occurring before the relevant channel-access decision in that exercised path</strong>. It is not, by itself, proof that a caller could read protected log contents or that every account type could exploit the behavior.</p>
   <p>Microsoft ultimately characterized the case as an <strong>authenticated remote denial of service affecting a single auto-restarting service</strong>. Earlier test notes also explored null-session behavior, but authentication and network exposure were not consistently established across all later configurations. I am not representing this as a universally unauthenticated vulnerability.</p>
   <h2>Test environments and scope</h2>
-  <p>The investigation spanned multiple Windows lab environments, including Windows 11 24H2 and Windows Insider Canary, with supplementary Windows Server testing. Two particularly relevant environments in the retained research notes were:</p>
+  <p>I successfully reproduced the Windows Event Log service failure in lab environments running <strong>Windows 11 24H2, Windows 11 Insider Canary, and Windows Server 2025</strong>. The environments and scope of the recorded findings are summarized below:</p>
   <div class="table-scroll"><table>
   <thead>
   <tr>
@@ -112,6 +116,11 @@
     <td>Windows 11 Insider Canary, build 27924.1000</td>
     <td>Event Log failure signature reproduced; system instability observed in some runs</td>
     <td>Later network/domain changes changed reproducibility; this does not prove a general kernel crash or uniform exposure</td>
+  </tr>
+  <tr>
+    <td>Windows Server 2025</td>
+    <td>Successfully reproduced the Windows Event Log service failure in a Windows Server 2025 lab environment</td>
+    <td>Server reproduction does not establish exploitability by a non-administrator on a domain controller or exposure under every firewall and authentication configuration</td>
   </tr>
   </tbody>
   </table></div>
