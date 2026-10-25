@@ -1,189 +1,208 @@
-<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>When Windows Event Logging Goes Dark — 1dotq</title>
-<meta name="description" content="Independent 1dotq research into MS-EVEN6 Windows Event Log stack exhaustion, observed telemetry gaps and the MSRC assessment of VULN-192344. No PoC included.">
-<link rel="stylesheet" href="../style.css">
-<style>
-  :root {color-scheme:dark;}
-  body {background:#0b1018;color:#d7e1ea;font:16px/1.72 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0}
-  .even6-wrap {max-width:900px;padding:32px 22px 80px;margin:auto}
-  .site-head{border-bottom:1px solid #253348;margin-bottom:45px;padding-bottom:20px}
-  .site-head a{color:#91e9c2;text-decoration:none}
-  .logo{font-size:27px;letter-spacing:.02em;font-weight:750}
-  .tagline{color:#91a5b9;font-size:14px;margin:0 0 7px}
-  .even6-article{max-width:830px}
-  .even6-article h1{font-size:clamp(27px,5vw,43px);line-height:1.16;color:#f4f8fc;margin-bottom:18px}
-  .even6-article h2{font-size:24px;margin-top:44px;border-bottom:1px solid #2b3949;padding-bottom:8px;color:#dffdec}
-  .even6-article h3{font-size:19px;margin-top:30px;color:#e7f5ff}
-  .even6-article p,.even6-article li{color:#d4deeb}
-  .even6-article a{color:#91e9c2;overflow-wrap:anywhere}
-  .even6-article strong{color:#f5f9fc}
-  .even6-article code{background:#1a2837;color:#c4f3dc;padding:.1em .3em;border-radius:4px;overflow-wrap:anywhere}
-  .even6-article blockquote{background:#141f2b;border-left:3px solid #81d6b5;padding:14px 20px;margin:26px 0}
-  .even6-article blockquote p{margin:0}
-  .even6-article table{border-collapse:collapse;width:100%;font-size:14px;margin:25px 0}
-  .even6-article th,.even6-article td{border:1px solid #334356;text-align:left;padding:10px 12px;vertical-align:top}
-  .even6-article th{background:#172434;color:#f0fff8}
-  .even6-article hr{border:0;border-top:1px solid #2b3949;margin:40px 0}
-  .even6-article ul,.even6-article ol{padding-left:24px}
-  .table-scroll{overflow-x:auto}
-  footer{margin-top:50px;border-top:1px solid #253348;padding-top:20px;font-size:14px;color:#91a5b9}
-  @media(max-width:620px){.even6-wrap{padding:22px 16px 60px}.even6-article table{font-size:13px}}
-</style>
-</head><body><main class="even6-wrap">
-<header class="site-head"><a href="../index.html" class="logo">// 1dotq</a><p class="tagline">vulnerability research &amp; low-level Windows internals</p><nav><a href="../index.html">posts</a> &nbsp;·&nbsp; <a href="https://github.com/1dotq">github</a></nav></header>
-<article class="even6-article"><h1>When Windows Event Logging Goes Dark: MS-EVEN6 Stack Exhaustion and the Telemetry Gap</h1>
-<p><strong>1dotq · October 25, 2026 · Windows / MS-EVEN6 / Security Telemetry</strong></p>
-<div class="table-scroll"><table>
-<thead>
-<tr>
-  <th>Field</th>
-  <th>Details</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td>Research reference</td>
-  <td>VULN-192344 / MSRC Case 119893</td>
-</tr>
-<tr>
-  <td>Component</td>
-  <td>Windows Event Log service (<code>wevtsvc.dll</code>)</td>
-</tr>
-<tr>
-  <td>Relevant interface</td>
-  <td>MS-EVEN6 / <code>EvtRpcRegisterLogQuery</code></td>
-</tr>
-<tr>
-  <td>Observed failure</td>
-  <td>Stack exhaustion, <code>STATUS_STACK_OVERFLOW</code> (<code>0xC00000FD</code>), service termination</td>
-</tr>
-<tr>
-  <td>Vendor disposition</td>
-  <td>Moderate severity; case closed September 29, 2026; no CVE or immediate servicing committed</td>
-</tr>
-<tr>
-  <td>Public exploit</td>
-  <td><strong>Not provided</strong></td>
-</tr>
-</tbody>
-</table></div>
-<blockquote>
-<p><strong>Disclosure note:</strong> This article documents observed behavior, defensive implications, and the vendor-assessment history. It deliberately omits the proof of concept, crafted request, payload structure, and procedural reproduction instructions. The findings are configuration- and build-dependent; the status of a comprehensive fix is not established here.</p>
-</blockquote>
-<h2>Why this matters</h2>
-<p>Windows Event Log is more than a convenient place to look up errors. It is a core source of audit and operational evidence for endpoint investigations and security monitoring platforms. A service restart may restore the service, but it does not necessarily reconstruct events that were never committed while the service was unavailable.</p>
-<p>My research into the MS-EVEN6 remote event logging interface identified a failure mode in which malformed query processing could exhaust a service thread's stack and terminate the Windows Event Log service. <strong>In the controlled lab tests, missing events were not recoverable after the Event Log service restarted.</strong> The interrupted event stream also produced gaps in telemetry available to a Wazuh deployment.</p>
-<p>The important distinction is between <strong>service availability</strong> and <strong>the continuity of security evidence</strong>. Those are related, but they are not the same property.</p>
-<h2>Technical overview</h2>
-<p>The affected component in my testing was <code>wevtsvc.dll</code>, which supports Windows Event Log operations. The behavior involved the <code>EvtRpcRegisterLogQuery</code> path exposed through the MS-EVEN6 RPC interface. The immediate failure signature was <code>STATUS_STACK_OVERFLOW</code> (<code>0xC00000FD</code>), after which the service terminated and could be restarted by Windows service recovery.</p>
-<p>The investigation also raised an authorization-ordering question. In one set of tests, an ordinary query received an access-denied response for a channel, while a malformed query targeted at that channel caused service termination. This is <strong>consistent with some query processing occurring before the relevant channel-access decision in that exercised path</strong>. It is not, by itself, proof that a caller could read protected log contents or that every account type could exploit the behavior.</p>
-<p>Microsoft ultimately characterized the case as an <strong>authenticated remote denial of service affecting a single auto-restarting service</strong>. Earlier test notes also explored null-session behavior, but authentication and network exposure were not consistently established across all later configurations. I am not representing this as a universally unauthenticated vulnerability.</p>
-<h2>Test environments and scope</h2>
-<p>The investigation spanned multiple Windows lab environments, including Windows 11 24H2 and Windows Insider Canary, with supplementary Windows Server testing. Two particularly relevant environments in the retained research notes were:</p>
-<div class="table-scroll"><table>
-<thead>
-<tr>
-  <th>Lab target</th>
-  <th>Recorded observation</th>
-  <th>Scope limitation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td>Windows 11 24H2, build 26100.1</td>
-  <td>Event Log service termination; controlled event-recording comparison</td>
-  <td>This was an early build without subsequent cumulative updates; results must not be generalized to fully updated systems</td>
-</tr>
-<tr>
-  <td>Windows 11 Insider Canary, build 27924.1000</td>
-  <td>Event Log failure signature reproduced; system instability observed in some runs</td>
-  <td>Later network/domain changes changed reproducibility; this does not prove a general kernel crash or uniform exposure</td>
-</tr>
-</tbody>
-</table></div>
-<p>The exact behavior depended on the build, authentication context, firewall configuration, and network/domain state. Testing against a domain controller did <strong>not</strong> establish a reliable non-administrator attack against domain controllers. A later authorization-ordering test also used a UAC-filtered account that belonged to the local Administrators group, so that particular result should not be described as proof of exploitation by a genuinely unprivileged account.</p>
-<h2>What the evidence showed</h2>
-<h3>1. A service crash rather than ordinary query failure</h3>
-<p>Windows Error Reporting identified the Windows Event Log service and <code>wevtsvc.dll</code> with an exception code of <code>0xC00000FD</code>. The service was observed terminating unexpectedly. Service recovery brought the service back in tested cases, but did not undo the interruption.</p>
-<h3>2. Events missing from a controlled observation window</h3>
-<p><strong>Finding: events missing during the crash window were not recoverable following service restart in the tested environment.</strong> In a controlled Windows 11 <strong>Application</strong> log comparison, all three synthetic events generated <em>before</em> the interruption were present afterward (<strong>3/3 recovered</strong>). By contrast, none of the three synthetic events generated <em>during</em> the interruption appeared after the service resumed (<strong>0/3 recovered</strong>). The missing events were not subsequently backfilled in that observation; restarting the Event Log service did not restore them.</p>
-<p>The original MSRC submission separately documented a <strong>Security</strong> log comparison reporting the same non-recovery pattern after a crash. These are lab-specific observations involving small samples—not proof that every event source, Windows release, or monitoring configuration loses events identically. “Not recoverable” describes the result of the tested restart and log inspection; it does not establish that data could never be reconstructed from an independent source.</p>
-<p>Strictly speaking, a record never committed to the event log cannot be described as an existing record later deleted from disk. The concern is <strong>audit-record non-creation or non-recovery during interrupted logging</strong>, not demonstrated arbitrary deletion of historical event files.</p>
-<h3>3. Wazuh telemetry reflected the gap</h3>
-<p>I ran a Wazuh agent on a Windows test host and monitored incoming Windows events while the Event Log service was interrupted. The SIEM view showed an interruption in expected Windows-event telemetry. Microsoft Defender status checks indicated that its antivirus and real-time protection components remained enabled in that test environment, illustrating that endpoint protection status and Windows-event visibility are separate things.</p>
-<p>The Wazuh observation establishes a visibility gap in the tested collection path, <strong>not</strong> that the endpoint was undetected by every possible security product or that all sources of telemetry stopped.</p>
-<h3>4. A question about the order of authorization and parsing</h3>
-<p>The same research showed a difference between how the service handled a benign access-denied query and a malformed query that produced a crash. This warrants investigation of the order in which the service validates query structure and evaluates channel permissions. It does not prove unauthorized log reading, arbitrary code execution, or a general security-boundary bypass.</p>
-<h2>Why automatic restart is an incomplete answer</h2>
-<p>Microsoft emphasized that the host automatically restarts the affected service. That is an important mitigation against prolonged service unavailability, and a factor in severity assessment.</p>
-<p>However, restarting a logging service is not equivalent to proving that no monitoring data was lost. A useful assessment has to ask:</p>
-<ul>
-<li>Were events generated or buffered during the interruption?</li>
-<li>Did the source commit those events after the service returned?</li>
-<li>Did forwarding agents and collection systems detect the outage and recover the gap?</li>
-<li>Was there independent telemetry available to establish what happened while the primary source was unavailable?</li>
-</ul>
-<p><strong>Observed outcome: the Event Log service restarted successfully, but the missing test events were not recoverable from the Windows event log afterward.</strong> They did not reappear or backfill during the documented observation. In this test, recovery of the service was therefore not recovery of the audit trail.</p>
-<h2>MSRC coordination and outcome</h2>
-<div class="table-scroll"><table>
-<thead>
-<tr>
-  <th>Date</th>
-  <th>Event</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td>June 1, 2026</td>
-  <td>Submitted the initial MS-EVEN6 report to MSRC with technical evidence</td>
-</tr>
-<tr>
-  <td>June 10, 2026</td>
-  <td>Submitted follow-up network/authentication findings; later testing showed that exposure needed more qualification</td>
-</tr>
-<tr>
-  <td>July 15, 2026</td>
-  <td>MSRC confirmed the case remained under review</td>
-</tr>
-<tr>
-  <td>August 27, 2026</td>
-  <td>Submitted observations about RPC endpoint registration; a later review corrected the distinction between a legacy identifier and the primary interface</td>
-</tr>
-<tr>
-  <td>September 29, 2026</td>
-  <td>MSRC closed the case as Moderate severity, without a CVE or commitment to immediate servicing</td>
-</tr>
-<tr>
-  <td>October 9, 2026</td>
-  <td>Requested clarification concerning authentication, logging impact, and authorization ordering</td>
-</tr>
-<tr>
-  <td>October 19, 2026</td>
-  <td>Provided additional controlled testing and requested reassessment</td>
-</tr>
-</tbody>
-</table></div>
-<p>Microsoft's September 29 explanation described the issue as authenticated stack exhaustion in the Event Log service, requiring valid network credentials and affecting a service that can automatically restart. MSRC assessed that impact as Moderate and below its immediate-servicing threshold. It offered researcher recognition through its Special Mentions program.</p>
-<p>I disagree that <strong>service restart alone</strong> adequately captures the implications of the event-visibility gaps observed in my lab. Nevertheless, a disagreement about severity is not proof of a hidden patch, an exploitable privilege boundary, or a vulnerability on every current Windows build. I am preserving that distinction here.</p>
-<p>As of the correspondence available for this write-up, Microsoft had not issued a CVE for this case, and I do not have confirmation of a complete fix or of a later revised severity decision.</p>
-<h2>Defensive considerations</h2>
-<p>Defenders can reduce exposure and improve resilience even when a vendor has not announced a dedicated update:</p>
-<ol>
-<li><strong>Limit remote Event Log RPC exposure</strong> to explicitly authorized management and collection systems using host firewall and network segmentation controls.</li>
-<li><strong>Alert on unexpected Windows Event Log service termination or repeated restarts</strong>, using an independent monitoring path where possible.</li>
-<li><strong>Measure collection health, not just endpoint health.</strong> A functioning EDR or antivirus service does not guarantee that Windows Event Log-derived SIEM data is complete.</li>
-<li><strong>Correlate multiple telemetry sources</strong>—for example, endpoint telemetry, network monitoring, authentication infrastructure, and collector health signals—to distinguish quiet systems from blind spots.</li>
-<li><strong>Test the recovery characteristics of collection pipelines</strong> in an authorized lab, including buffering and backfill behavior, rather than assuming restored service means restored evidence.</li>
-</ol>
-<p>These measures are risk reductions, not a substitute for a vendor-side fix where a vulnerable code path remains reachable.</p>
-<h2>Closing thoughts</h2>
-<p>This investigation began with an Event Log service crash. It became a study of how security visibility behaves when the infrastructure responsible for producing that visibility fails.</p>
-<p>MSRC's Moderate-severity assessment and my disagreement about the telemetry consequences are both part of the record. My goal in publishing the research is to make those distinctions clear and to encourage security engineers to assess the continuity—not merely the availability—of their audit pipelines.</p>
-<p><strong>When security telemetry goes dark, the absence of an alert does not necessarily mean the absence of a threat.</strong></p>
-<p><em>1dotq — independent security research</em></p>
-<hr />
-<p><strong>References:</strong> <a href="https://www.microsoft.com/en-us/msrc/cvd">Microsoft Coordinated Vulnerability Disclosure</a> · <a href="https://www.microsoft.com/en-us/msrc/bounty-guidelines">Microsoft Bounty Program Guidelines</a> · <a href="https://www.microsoft.com/en-us/msrc/windows-security-servicing-criteria">Windows Security Servicing Criteria</a></p>
-</article><footer>1dotq — independent security research &nbsp;·&nbsp; <a href="../index.html" style="color:#91e9c2">Back to all posts</a></footer>
-</main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>When Windows Event Logging Goes Dark — 1dotq</title>
+  <meta name="description" content="Independent 1dotq research into MS-EVEN6 Windows Event Log stack exhaustion, non-recoverable event gaps observed in testing, and the MSRC assessment of VULN-192344. No PoC included.">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    /* Article-only formatting: inherits the site's black, monospace, blue-accent theme. */
+    .post-body .table-scroll { max-width: 100%; overflow-x: auto; margin: 0 0 24px; }
+    .post-body table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .post-body th, .post-body td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid #222; }
+    .post-body th { color: #888; font-weight: normal; }
+    .post-body td { color: #b0b0b0; }
+    .post-body td:first-child { color: #5af; }
+    .post-body h3 { color: #ddd; font-size: 0.98rem; margin: 28px 0 12px; }
+    .post-body blockquote { background: #111; border-left: 3px solid #fa4; padding: 12px 16px; margin: 20px 0 24px; }
+    .post-body blockquote p { margin: 0; color: #999; }
+    .post-body hr { border: 0; border-top: 1px solid #1a1a1a; margin: 36px 0 20px; }
+    .post-body strong { color: #ddd; }
+    .post-body a { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><span>//</span> 1dotq</h1>
+  <p>vulnerability research &amp; low-level Windows internals</p>
+  <nav>
+    <a href="../index.html">posts</a>
+    <a href="mailto:quintinm1@gmail.com">contact</a>
+    <a href="https://github.com/1dotq" target="_blank" rel="noopener noreferrer">github</a>
+  </nav>
+</header>
+
+<article>
+  <div class="post-header">
+    <h1>When Windows Event Logging Goes Dark: MS-EVEN6 Stack Exhaustion and the Telemetry Gap</h1>
+    <div class="meta">2026-10-25 &nbsp;&mdash;&nbsp; Windows Event Log / MS-EVEN6 &nbsp;&mdash;&nbsp; VULN-192344</div>
+    <div class="tags" style="margin-top:10px;">
+      <span>windows</span>
+      <span>event-log</span>
+      <span>rpc</span>
+      <span>security-telemetry</span>
+    </div>
+  </div>
+
+  <div class="post-body">
+  <div class="table-scroll"><table>
+  <thead>
+  <tr>
+    <th>Field</th>
+    <th>Details</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>Research reference</td>
+    <td>VULN-192344 / MSRC Case 119893</td>
+  </tr>
+  <tr>
+    <td>Component</td>
+    <td>Windows Event Log service (<code>wevtsvc.dll</code>)</td>
+  </tr>
+  <tr>
+    <td>Relevant interface</td>
+    <td>MS-EVEN6 / <code>EvtRpcRegisterLogQuery</code></td>
+  </tr>
+  <tr>
+    <td>Observed failure</td>
+    <td>Stack exhaustion, <code>STATUS_STACK_OVERFLOW</code> (<code>0xC00000FD</code>), service termination</td>
+  </tr>
+  <tr>
+    <td>Vendor disposition</td>
+    <td>Moderate severity; case closed September 29, 2026; no CVE or immediate servicing committed</td>
+  </tr>
+  <tr>
+    <td>Public exploit</td>
+    <td><strong>Not provided</strong></td>
+  </tr>
+  </tbody>
+  </table></div>
+  <blockquote>
+  <p><strong>Disclosure note:</strong> This article documents observed behavior, defensive implications, and the vendor-assessment history. It deliberately omits the proof of concept, crafted request, payload structure, and procedural reproduction instructions. The findings are configuration- and build-dependent; the status of a comprehensive fix is not established here.</p>
+  </blockquote>
+  <h2>Why this matters</h2>
+  <p>Windows Event Log is more than a convenient place to look up errors. It is a core source of audit and operational evidence for endpoint investigations and security monitoring platforms. A service restart may restore the service, but it does not necessarily reconstruct events that were never committed while the service was unavailable.</p>
+  <p>My research into the MS-EVEN6 remote event logging interface identified a failure mode in which malformed query processing could exhaust a service thread's stack and terminate the Windows Event Log service. <strong>In the controlled lab tests, missing events were not recoverable after the Event Log service restarted.</strong> The interrupted event stream also produced gaps in telemetry available to a Wazuh deployment.</p>
+  <p>The important distinction is between <strong>service availability</strong> and <strong>the continuity of security evidence</strong>. Those are related, but they are not the same property.</p>
+  <h2>Technical overview</h2>
+  <p>The affected component in my testing was <code>wevtsvc.dll</code>, which supports Windows Event Log operations. The behavior involved the <code>EvtRpcRegisterLogQuery</code> path exposed through the MS-EVEN6 RPC interface. The immediate failure signature was <code>STATUS_STACK_OVERFLOW</code> (<code>0xC00000FD</code>), after which the service terminated and could be restarted by Windows service recovery.</p>
+  <p>The investigation also raised an authorization-ordering question. In one set of tests, an ordinary query received an access-denied response for a channel, while a malformed query targeted at that channel caused service termination. This is <strong>consistent with some query processing occurring before the relevant channel-access decision in that exercised path</strong>. It is not, by itself, proof that a caller could read protected log contents or that every account type could exploit the behavior.</p>
+  <p>Microsoft ultimately characterized the case as an <strong>authenticated remote denial of service affecting a single auto-restarting service</strong>. Earlier test notes also explored null-session behavior, but authentication and network exposure were not consistently established across all later configurations. I am not representing this as a universally unauthenticated vulnerability.</p>
+  <h2>Test environments and scope</h2>
+  <p>The investigation spanned multiple Windows lab environments, including Windows 11 24H2 and Windows Insider Canary, with supplementary Windows Server testing. Two particularly relevant environments in the retained research notes were:</p>
+  <div class="table-scroll"><table>
+  <thead>
+  <tr>
+    <th>Lab target</th>
+    <th>Recorded observation</th>
+    <th>Scope limitation</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>Windows 11 24H2, build 26100.1</td>
+    <td>Event Log service termination; controlled event-recording comparison</td>
+    <td>This was an early build without subsequent cumulative updates; results must not be generalized to fully updated systems</td>
+  </tr>
+  <tr>
+    <td>Windows 11 Insider Canary, build 27924.1000</td>
+    <td>Event Log failure signature reproduced; system instability observed in some runs</td>
+    <td>Later network/domain changes changed reproducibility; this does not prove a general kernel crash or uniform exposure</td>
+  </tr>
+  </tbody>
+  </table></div>
+  <p>The exact behavior depended on the build, authentication context, firewall configuration, and network/domain state. Testing against a domain controller did <strong>not</strong> establish a reliable non-administrator attack against domain controllers. A later authorization-ordering test also used a UAC-filtered account that belonged to the local Administrators group, so that particular result should not be described as proof of exploitation by a genuinely unprivileged account.</p>
+  <h2>What the evidence showed</h2>
+  <h3>1. A service crash rather than ordinary query failure</h3>
+  <p>Windows Error Reporting identified the Windows Event Log service and <code>wevtsvc.dll</code> with an exception code of <code>0xC00000FD</code>. The service was observed terminating unexpectedly. Service recovery brought the service back in tested cases, but did not undo the interruption.</p>
+  <h3>2. Events missing from a controlled observation window</h3>
+  <p><strong>Finding: events missing during the crash window were not recoverable following service restart in the tested environment.</strong> In a controlled Windows 11 <strong>Application</strong> log comparison, all three synthetic events generated <em>before</em> the interruption were present afterward (<strong>3/3 recovered</strong>). By contrast, none of the three synthetic events generated <em>during</em> the interruption appeared after the service resumed (<strong>0/3 recovered</strong>). The missing events were not subsequently backfilled in that observation; restarting the Event Log service did not restore them.</p>
+  <p>The original MSRC submission separately documented a <strong>Security</strong> log comparison reporting the same non-recovery pattern after a crash. These are lab-specific observations involving small samples—not proof that every event source, Windows release, or monitoring configuration loses events identically. “Not recoverable” describes the result of the tested restart and log inspection; it does not establish that data could never be reconstructed from an independent source.</p>
+  <p>Strictly speaking, a record never committed to the event log cannot be described as an existing record later deleted from disk. The concern is <strong>audit-record non-creation or non-recovery during interrupted logging</strong>, not demonstrated arbitrary deletion of historical event files.</p>
+  <h3>3. Wazuh telemetry reflected the gap</h3>
+  <p>I ran a Wazuh agent on a Windows test host and monitored incoming Windows events while the Event Log service was interrupted. The SIEM view showed an interruption in expected Windows-event telemetry. Microsoft Defender status checks indicated that its antivirus and real-time protection components remained enabled in that test environment, illustrating that endpoint protection status and Windows-event visibility are separate things.</p>
+  <p>The Wazuh observation establishes a visibility gap in the tested collection path, <strong>not</strong> that the endpoint was undetected by every possible security product or that all sources of telemetry stopped.</p>
+  <h3>4. A question about the order of authorization and parsing</h3>
+  <p>The same research showed a difference between how the service handled a benign access-denied query and a malformed query that produced a crash. This warrants investigation of the order in which the service validates query structure and evaluates channel permissions. It does not prove unauthorized log reading, arbitrary code execution, or a general security-boundary bypass.</p>
+  <h2>Why automatic restart is an incomplete answer</h2>
+  <p>Microsoft emphasized that the host automatically restarts the affected service. That is an important mitigation against prolonged service unavailability, and a factor in severity assessment.</p>
+  <p>However, restarting a logging service is not equivalent to proving that no monitoring data was lost. A useful assessment has to ask:</p>
+  <ul>
+  <li>Were events generated or buffered during the interruption?</li>
+  <li>Did the source commit those events after the service returned?</li>
+  <li>Did forwarding agents and collection systems detect the outage and recover the gap?</li>
+  <li>Was there independent telemetry available to establish what happened while the primary source was unavailable?</li>
+  </ul>
+  <p><strong>Observed outcome: the Event Log service restarted successfully, but the missing test events were not recoverable from the Windows event log afterward.</strong> They did not reappear or backfill during the documented observation. In this test, recovery of the service was therefore not recovery of the audit trail.</p>
+  <h2>MSRC coordination and outcome</h2>
+  <div class="table-scroll"><table>
+  <thead>
+  <tr>
+    <th>Date</th>
+    <th>Event</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>June 1, 2026</td>
+    <td>Submitted the initial MS-EVEN6 report to MSRC with technical evidence</td>
+  </tr>
+  <tr>
+    <td>June 10, 2026</td>
+    <td>Submitted follow-up network/authentication findings; later testing showed that exposure needed more qualification</td>
+  </tr>
+  <tr>
+    <td>July 15, 2026</td>
+    <td>MSRC confirmed the case remained under review</td>
+  </tr>
+  <tr>
+    <td>August 27, 2026</td>
+    <td>Submitted observations about RPC endpoint registration; a later review corrected the distinction between a legacy identifier and the primary interface</td>
+  </tr>
+  <tr>
+    <td>September 29, 2026</td>
+    <td>MSRC closed the case as Moderate severity, without a CVE or commitment to immediate servicing</td>
+  </tr>
+  <tr>
+    <td>October 9, 2026</td>
+    <td>Requested clarification concerning authentication, logging impact, and authorization ordering</td>
+  </tr>
+  <tr>
+    <td>October 19, 2026</td>
+    <td>Provided additional controlled testing and requested reassessment</td>
+  </tr>
+  </tbody>
+  </table></div>
+  <p>Microsoft's September 29 explanation described the issue as authenticated stack exhaustion in the Event Log service, requiring valid network credentials and affecting a service that can automatically restart. MSRC assessed that impact as Moderate and below its immediate-servicing threshold. It offered researcher recognition through its Special Mentions program.</p>
+  <p>I disagree that <strong>service restart alone</strong> adequately captures the implications of the event-visibility gaps observed in my lab. Nevertheless, a disagreement about severity is not proof of a hidden patch, an exploitable privilege boundary, or a vulnerability on every current Windows build. I am preserving that distinction here.</p>
+  <p>As of the correspondence available for this write-up, Microsoft had not issued a CVE for this case, and I do not have confirmation of a complete fix or of a later revised severity decision.</p>
+  <h2>Defensive considerations</h2>
+  <p>Defenders can reduce exposure and improve resilience even when a vendor has not announced a dedicated update:</p>
+  <ol>
+  <li><strong>Limit remote Event Log RPC exposure</strong> to explicitly authorized management and collection systems using host firewall and network segmentation controls.</li>
+  <li><strong>Alert on unexpected Windows Event Log service termination or repeated restarts</strong>, using an independent monitoring path where possible.</li>
+  <li><strong>Measure collection health, not just endpoint health.</strong> A functioning EDR or antivirus service does not guarantee that Windows Event Log-derived SIEM data is complete.</li>
+  <li><strong>Correlate multiple telemetry sources</strong>—for example, endpoint telemetry, network monitoring, authentication infrastructure, and collector health signals—to distinguish quiet systems from blind spots.</li>
+  <li><strong>Test the recovery characteristics of collection pipelines</strong> in an authorized lab, including buffering and backfill behavior, rather than assuming restored service means restored evidence.</li>
+  </ol>
+  <p>These measures are risk reductions, not a substitute for a vendor-side fix where a vulnerable code path remains reachable.</p>
+  <h2>Closing thoughts</h2>
+  <p>This investigation began with an Event Log service crash. It became a study of how security visibility behaves when the infrastructure responsible for producing that visibility fails.</p>
+  <p>MSRC's Moderate-severity assessment and my disagreement about the telemetry consequences are both part of the record. My goal in publishing the research is to make those distinctions clear and to encourage security engineers to assess the continuity—not merely the availability—of their audit pipelines.</p>
+  <p><strong>When security telemetry goes dark, the absence of an alert does not necessarily mean the absence of a threat.</strong></p>
+  <p><em>1dotq — independent security research</em></p>
+  <hr />
+  <p><strong>References:</strong> <a href="https://www.microsoft.com/en-us/msrc/cvd">Microsoft Coordinated Vulnerability Disclosure</a> · <a href="https://www.microsoft.com/en-us/msrc/bounty-guidelines">Microsoft Bounty Program Guidelines</a> · <a href="https://www.microsoft.com/en-us/msrc/windows-security-servicing-criteria">Windows Security Servicing Criteria</a></p>
+  </div>
+</article>
+
+<footer>
+  1dotq &mdash; independent security research
+</footer>
+
+</body>
+</html>
