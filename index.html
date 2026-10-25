@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1dotq — security research</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1><span>//</span> 1dotq</h1>
+  <p>vulnerability research &amp; low-level Windows internals</p>
+  <nav>
+    <a href="index.html">posts</a>
+    <a href="mailto:quintinm1@gmail.com">contact</a>
+    <a href="https://github.com/1dotq" target="_blank" rel="noopener noreferrer">github</a>
+  </nav>
+</header>
+
+<main>
+  <ul class="post-list">
+
+    <li>
+      <div class="date">2026-10-25</div>
+      <a class="title" href="posts/even6-eventlog-telemetry-gap.html">
+        When Windows Event Logging Goes Dark: MS-EVEN6 and the Telemetry Gap
+      </a>
+      <div class="excerpt">
+        Windows Event Log stack exhaustion through the MS-EVEN6 RPC interface.
+        In controlled tests, the service restarted but audit events generated
+        during the interruption were not recoverable (0/3), leaving gaps in
+        security telemetry. VULN-192344; assessed Moderate by MSRC, no CVE.
+      </div>
+    </li>
+
+    <li>
+      <div class="date">2026-06-01</div>
+      <a class="title" href="posts/lanman-thread-leak.html">
+        LanmanServer thread leak: authenticated RPC cycling to DoS
+      </a>
+      <div class="excerpt">
+        Worker threads in srvsvc.dll leak on disconnect. 500 cycles in 25 seconds
+        raises thread count from ~50 to thousands; they never reclaim. EventID 7011,
+        full SMB stack unavailable. VULN-182585, no CVE.
+      </div>
+    </li>
+
+    <li>
+      <div class="date">2026-05-19</div>
+      <a class="title" href="posts/wsdapi-uaf.html">
+        Three pre-auth memory corruption bugs in Windows wsdapi.dll
+      </a>
+      <div class="excerpt">
+        UAF with vtable dispatch, stack GS overflow, and a lock-free race —
+        all reachable on TCP 5357 with no credentials, no interaction.
+      </div>
+    </li>
+
+  </ul>
+</main>
+
+<footer>
+  1dotq &mdash; independent security research
+</footer>
+
+</body>
+</html>
