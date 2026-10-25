@@ -98,6 +98,7 @@
   <p>Microsoft ultimately characterized the case as an <strong>authenticated remote denial of service affecting a single auto-restarting service</strong>. Earlier test notes also explored null-session behavior, but authentication and network exposure were not consistently established across all later configurations. I am not representing this as a universally unauthenticated vulnerability.</p>
   <h2>Test environments and scope</h2>
   <p>I successfully reproduced the Windows Event Log service failure in lab environments running <strong>Windows 11 24H2, Windows 11 Insider Canary, and Windows Server 2025</strong>. The environments and scope of the recorded findings are summarized below:</p>
+  <div class="note"><strong>Windows Server 2025 — successful reproduction.</strong> The Windows Event Log service failure was reproduced on Windows Server 2025 in my lab. This finding is separate from the question of whether a non-administrator can trigger it remotely on a domain controller.</div>
   <div class="table-scroll"><table>
   <thead>
   <tr>
@@ -175,14 +176,6 @@
   <tr>
     <td>September 29, 2026</td>
     <td>MSRC closed the case as Moderate severity, without a CVE or commitment to immediate servicing</td>
-  </tr>
-  <tr>
-    <td>October 9, 2026</td>
-    <td>Requested clarification concerning authentication, logging impact, and authorization ordering</td>
-  </tr>
-  <tr>
-    <td>October 19, 2026</td>
-    <td>Provided additional controlled testing and requested reassessment</td>
   </tr>
   </tbody>
   </table></div>
