@@ -20,6 +20,9 @@
     .post-body hr { border: 0; border-top: 1px solid #1a1a1a; margin: 36px 0 20px; }
     .post-body strong { color: #ddd; }
     .post-body a { overflow-wrap: anywhere; }
+    .research-video { margin: 20px 0 32px; }
+    .research-video video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #080b13; border: 1px solid #2a2a2a; }
+    .research-video figcaption { margin-top: 10px; color: #777; font-size: 0.8rem; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -136,6 +139,15 @@
   <h3>3. Wazuh telemetry reflected the gap</h3>
   <p>I ran a Wazuh agent on a Windows test host and monitored incoming Windows events while the Event Log service was interrupted. The SIEM view showed an interruption in expected Windows-event telemetry. Microsoft Defender status checks indicated that its antivirus and real-time protection components remained enabled in that test environment, illustrating that endpoint protection status and Windows-event visibility are separate things.</p>
   <p>The Wazuh observation establishes a visibility gap in the tested collection path, <strong>not</strong> that the endpoint was undetected by every possible security product or that all sources of telemetry stopped.</p>
+  <h3 id="even6-video-demo">Video demonstration: Windows Event Log and Wazuh</h3>
+  <p>This 4-minute, 25-second lab demonstration shows the Windows Event Log service and the corresponding interruption in Windows-event telemetry viewed through Wazuh. The controlled event-recovery counts described above come from separately recorded testing, rather than a count derived solely from this video.</p>
+  <figure class="research-video">
+    <video controls playsinline preload="metadata" poster="even6-video-cover.svg" aria-label="1dotq EVEN6 Windows Event Log telemetry gap demonstration">
+      <source src="even6-demo.mp4" type="video/mp4">
+      Your browser does not support HTML5 video.
+    </video>
+    <figcaption>1dotq research demonstration · Windows Event Log / MS-EVEN6 / Wazuh · 4:25. No proof-of-concept source code is provided in this article.</figcaption>
+  </figure>
   <h3>4. A question about the order of authorization and parsing</h3>
   <p>The same research showed a difference between how the service handled a benign access-denied query and a malformed query that produced a crash. This warrants investigation of the order in which the service validates query structure and evaluates channel permissions. It does not prove unauthorized log reading, arbitrary code execution, or a general security-boundary bypass.</p>
   <h2>Why automatic restart is an incomplete answer</h2>
