@@ -95,8 +95,7 @@
   <blockquote>
   <p><strong>Disclosure note:</strong> This article documents observed behavior, defensive implications, and the vendor-assessment history. It deliberately omits the proof of concept, crafted request, payload structure, and procedural reproduction instructions. The findings are configuration- and build-dependent; the status of a comprehensive fix is not established here.</p>
   </blockquote>
-  <div class="note"><strong>Research correction (October 25, 2026):</strong> An earlier version of this article incorrectly described the Event Log service as automatically recovering after the crash. <strong>In my controlled testing, the service did not automatically restart; I had to restart it manually.</strong> The missing audit events did not reappear after the manual restart. Microsoft described automatic service recovery in its assessment; this was not what I observed.</div>
-  <h2>Why this matters</h2>
+    <h2>Why this matters</h2>
   <p>Windows Event Log is more than a convenient place to look up errors. It is a core source of audit and operational evidence for endpoint investigations and security monitoring platforms. A service restart may restore the service, but it does not necessarily reconstruct events that were never committed while the service was unavailable.</p>
   <p>My research into the MS-EVEN6 remote event logging interface identified a failure mode in which malformed query processing could exhaust a service thread's stack and terminate the Windows Event Log service. <strong>In the controlled lab tests, the service remained stopped until I manually restarted it, and the missing events were not recoverable afterward.</strong> The interrupted event stream also produced gaps in telemetry available to a Wazuh deployment.</p>
   <p>The important distinction is between <strong>service availability</strong> and <strong>the continuity of security evidence</strong>. Those are related, but they are not the same property.</p>
