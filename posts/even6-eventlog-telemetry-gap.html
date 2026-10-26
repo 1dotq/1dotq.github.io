@@ -79,6 +79,10 @@
     <td>Stack exhaustion, <code>STATUS_STACK_OVERFLOW</code> (<code>0xC00000FD</code>), service termination</td>
   </tr>
   <tr>
+    <td>Observed service recovery</td>
+    <td><strong>No automatic recovery observed.</strong> The service remained stopped until I manually restarted it in my test environment.</td>
+  </tr>
+  <tr>
     <td>Vendor disposition</td>
     <td>Moderate severity; case closed September 29, 2026; no CVE or immediate servicing committed</td>
   </tr>
@@ -91,14 +95,15 @@
   <blockquote>
   <p><strong>Disclosure note:</strong> This article documents observed behavior, defensive implications, and the vendor-assessment history. It deliberately omits the proof of concept, crafted request, payload structure, and procedural reproduction instructions. The findings are configuration- and build-dependent; the status of a comprehensive fix is not established here.</p>
   </blockquote>
+  <div class="note"><strong>Research correction (October 25, 2026):</strong> An earlier version of this article incorrectly described the Event Log service as automatically recovering after the crash. <strong>In my controlled testing, the service did not automatically restart; I had to restart it manually.</strong> The missing audit events did not reappear after the manual restart. Microsoft described automatic service recovery in its assessment; this was not what I observed.</div>
   <h2>Why this matters</h2>
   <p>Windows Event Log is more than a convenient place to look up errors. It is a core source of audit and operational evidence for endpoint investigations and security monitoring platforms. A service restart may restore the service, but it does not necessarily reconstruct events that were never committed while the service was unavailable.</p>
-  <p>My research into the MS-EVEN6 remote event logging interface identified a failure mode in which malformed query processing could exhaust a service thread's stack and terminate the Windows Event Log service. <strong>In the controlled lab tests, missing events were not recoverable after the Event Log service restarted.</strong> The interrupted event stream also produced gaps in telemetry available to a Wazuh deployment.</p>
+  <p>My research into the MS-EVEN6 remote event logging interface identified a failure mode in which malformed query processing could exhaust a service thread's stack and terminate the Windows Event Log service. <strong>In the controlled lab tests, the service remained stopped until I manually restarted it, and the missing events were not recoverable afterward.</strong> The interrupted event stream also produced gaps in telemetry available to a Wazuh deployment.</p>
   <p>The important distinction is between <strong>service availability</strong> and <strong>the continuity of security evidence</strong>. Those are related, but they are not the same property.</p>
   <h2>Technical overview</h2>
-  <p>The affected component in my testing was <code>wevtsvc.dll</code>, which supports Windows Event Log operations. The behavior involved the <code>EvtRpcRegisterLogQuery</code> path exposed through the MS-EVEN6 RPC interface. The immediate failure signature was <code>STATUS_STACK_OVERFLOW</code> (<code>0xC00000FD</code>), after which the service terminated and could be restarted by Windows service recovery.</p>
+  <p>The affected component in my testing was <code>wevtsvc.dll</code>, which supports Windows Event Log operations. The behavior involved the <code>EvtRpcRegisterLogQuery</code> path exposed through the MS-EVEN6 RPC interface. The immediate failure signature was <code>STATUS_STACK_OVERFLOW</code> (<code>0xC00000FD</code>), after which the service terminated. In my controlled testing, it remained stopped until I manually restarted the service; I did not observe automatic recovery.</p>
   <p>The investigation also raised an authorization-ordering question. In one set of tests, an ordinary query received an access-denied response for a channel, while a malformed query targeted at that channel caused service termination. This is <strong>consistent with some query processing occurring before the relevant channel-access decision in that exercised path</strong>. It is not, by itself, proof that a caller could read protected log contents or that every account type could exploit the behavior.</p>
-  <p>Microsoft ultimately characterized the case as an <strong>authenticated remote denial of service affecting a single auto-restarting service</strong>. Earlier test notes also explored null-session behavior, but authentication and network exposure were not consistently established across all later configurations. I am not representing this as a universally unauthenticated vulnerability.</p>
+  <p>Microsoft characterized the case as an <strong>authenticated remote denial of service affecting a single service that it said automatically restarts</strong>. <strong>That automatic-restart characterization does not match my test observations:</strong> I had to restart the service manually. Earlier test notes also explored null-session behavior, but authentication and network exposure were not consistently established across all later configurations. I am not representing this as a universally unauthenticated vulnerability.</p>
   <h2>Test environments and scope</h2>
   <p>I successfully reproduced the Windows Event Log service failure in lab environments running <strong>Windows 11 24H2, Windows 11 Insider Canary, and Windows Server 2025</strong>. The environments and scope of the recorded findings are summarized below:</p>
   <div class="note"><strong>Windows Server 2025 — successful reproduction.</strong> The Windows Event Log service failure was reproduced on Windows Server 2025 in my lab. This finding is separate from the question of whether a non-administrator can trigger it remotely on a domain controller.</div>
@@ -131,16 +136,16 @@
   <p>The exact behavior depended on the build, authentication context, firewall configuration, and network/domain state. Testing against a domain controller did <strong>not</strong> establish a reliable non-administrator attack against domain controllers. A later authorization-ordering test also used a UAC-filtered account that belonged to the local Administrators group, so that particular result should not be described as proof of exploitation by a genuinely unprivileged account.</p>
   <h2>What the evidence showed</h2>
   <h3>1. A service crash rather than ordinary query failure</h3>
-  <p>Windows Error Reporting identified the Windows Event Log service and <code>wevtsvc.dll</code> with an exception code of <code>0xC00000FD</code>. The service was observed terminating unexpectedly. Service recovery brought the service back in tested cases, but did not undo the interruption.</p>
+  <p>Windows Error Reporting identified the Windows Event Log service and <code>wevtsvc.dll</code> with an exception code of <code>0xC00000FD</code>. The service was observed terminating unexpectedly. The service did <strong>not</strong> automatically recover in my controlled tests; I had to restart it manually. Restarting the service restored its operation but did not recover the missing test events.</p>
   <h3>2. Events missing from a controlled observation window</h3>
-  <p><strong>Finding: events missing during the crash window were not recoverable following service restart in the tested environment.</strong> In a controlled Windows 11 <strong>Application</strong> log comparison, all three synthetic events generated <em>before</em> the interruption were present afterward (<strong>3/3 recovered</strong>). By contrast, none of the three synthetic events generated <em>during</em> the interruption appeared after the service resumed (<strong>0/3 recovered</strong>). The missing events were not subsequently backfilled in that observation; restarting the Event Log service did not restore them.</p>
+  <p><strong>Finding: events missing during the crash window were not recoverable following <em>manual</em> service restart in the tested environment.</strong> In a controlled Windows 11 <strong>Application</strong> log comparison, all three synthetic events generated <em>before</em> the interruption were present afterward (<strong>3/3 recovered</strong>). By contrast, none of the three synthetic events generated <em>during</em> the interruption appeared after the service resumed (<strong>0/3 recovered</strong>). The missing events were not subsequently backfilled in that observation; manually restarting the Event Log service did not restore them.</p>
   <p>The original MSRC submission separately documented a <strong>Security</strong> log comparison reporting the same non-recovery pattern after a crash. These are lab-specific observations involving small samples—not proof that every event source, Windows release, or monitoring configuration loses events identically. “Not recoverable” describes the result of the tested restart and log inspection; it does not establish that data could never be reconstructed from an independent source.</p>
   <p>Strictly speaking, a record never committed to the event log cannot be described as an existing record later deleted from disk. The concern is <strong>audit-record non-creation or non-recovery during interrupted logging</strong>, not demonstrated arbitrary deletion of historical event files.</p>
   <h3>3. Wazuh telemetry reflected the gap</h3>
   <p>I ran a Wazuh agent on a Windows test host and monitored incoming Windows events while the Event Log service was interrupted. The SIEM view showed an interruption in expected Windows-event telemetry. Microsoft Defender status checks indicated that its antivirus and real-time protection components remained enabled in that test environment, illustrating that endpoint protection status and Windows-event visibility are separate things.</p>
   <p>The Wazuh observation establishes a visibility gap in the tested collection path, <strong>not</strong> that the endpoint was undetected by every possible security product or that all sources of telemetry stopped.</p>
   <h3 id="even6-video-demo">Video demonstration: Windows Event Log and Wazuh</h3>
-  <p>This 4-minute, 25-second lab demonstration shows the Windows Event Log service and the corresponding interruption in Windows-event telemetry viewed through Wazuh. The controlled event-recovery counts described above come from separately recorded testing, rather than a count derived solely from this video.</p>
+  <p>This 4-minute, 25-second lab demonstration shows the Windows Event Log service and the corresponding interruption in Windows-event telemetry viewed through Wazuh. In my controlled testing, the service remained stopped until I manually restarted it. The controlled event-recovery counts described above come from separately recorded testing, rather than a count derived solely from this video.</p>
   <figure class="research-video">
     <video controls playsinline preload="metadata" poster="even6-video-cover.svg" aria-label="1dotq EVEN6 Windows Event Log telemetry gap demonstration">
       <source src="even6-demo.mp4" type="video/mp4">
@@ -150,8 +155,8 @@
   </figure>
   <h3>4. A question about the order of authorization and parsing</h3>
   <p>The same research showed a difference between how the service handled a benign access-denied query and a malformed query that produced a crash. This warrants investigation of the order in which the service validates query structure and evaluates channel permissions. It does not prove unauthorized log reading, arbitrary code execution, or a general security-boundary bypass.</p>
-  <h2>Why automatic restart is an incomplete answer</h2>
-  <p>Microsoft emphasized that the host automatically restarts the affected service. That is an important mitigation against prolonged service unavailability, and a factor in severity assessment.</p>
+  <h2>Automatic service recovery was not observed</h2>
+  <p>In its September 29 assessment, Microsoft stated that the host automatically restarts the affected Windows Event Log service and treated that as a factor limiting severity. <strong>My controlled tests showed something different: following the crash, the service did not restart on its own. I had to restart it manually.</strong> This is a distinction between the vendor’s assessment and my observed behavior, not proof that every Windows build and configuration behaves identically.</p>
   <p>However, restarting a logging service is not equivalent to proving that no monitoring data was lost. A useful assessment has to ask:</p>
   <ul>
   <li>Were events generated or buffered during the interruption?</li>
@@ -159,7 +164,7 @@
   <li>Did forwarding agents and collection systems detect the outage and recover the gap?</li>
   <li>Was there independent telemetry available to establish what happened while the primary source was unavailable?</li>
   </ul>
-  <p><strong>Observed outcome: the Event Log service restarted successfully, but the missing test events were not recoverable from the Windows event log afterward.</strong> They did not reappear or backfill during the documented observation. In this test, recovery of the service was therefore not recovery of the audit trail.</p>
+  <p><strong>Observed outcome: the Event Log service remained stopped until I manually restarted it, and the missing test events were still not recoverable from the Windows event log afterward.</strong> They did not reappear or backfill during the documented observation. In this test, recovery of the service was therefore not recovery of the audit trail.</p>
   <h2>MSRC coordination and outcome</h2>
   <div class="table-scroll"><table>
   <thead>
@@ -191,17 +196,17 @@
   </tr>
   </tbody>
   </table></div>
-  <p>Microsoft's September 29 explanation described the issue as authenticated stack exhaustion in the Event Log service, requiring valid network credentials and affecting a service that can automatically restart. MSRC assessed that impact as Moderate and below its immediate-servicing threshold. It offered researcher recognition through its Special Mentions program.</p>
-  <p>I disagree that <strong>service restart alone</strong> adequately captures the implications of the event-visibility gaps observed in my lab. Nevertheless, a disagreement about severity is not proof of a hidden patch, an exploitable privilege boundary, or a vulnerability on every current Windows build. I am preserving that distinction here.</p>
+  <p>Microsoft's September 29 explanation described the issue as authenticated stack exhaustion in the Event Log service, requiring valid network credentials and affecting a service that Microsoft said would restart automatically. That stated recovery behavior differs from my lab observations, in which manual service restart was required. MSRC assessed that impact as Moderate and below its immediate-servicing threshold. It offered researcher recognition through its Special Mentions program.</p>
+  <p>I disagree with the assumption of automatic service recovery in the severity assessment; I did not observe it. Moreover, <strong>even after manual restart</strong>, the missing events were not recovered in my controlled comparison. Nevertheless, a disagreement about severity is not proof of a hidden patch, an exploitable privilege boundary, or a vulnerability on every current Windows build. I am preserving that distinction here.</p>
   <p>As of the correspondence available for this write-up, Microsoft had not issued a CVE for this case, and I do not have confirmation of a complete fix or of a later revised severity decision.</p>
   <h2>Defensive considerations</h2>
   <p>Defenders can reduce exposure and improve resilience even when a vendor has not announced a dedicated update:</p>
   <ol>
   <li><strong>Limit remote Event Log RPC exposure</strong> to explicitly authorized management and collection systems using host firewall and network segmentation controls.</li>
-  <li><strong>Alert on unexpected Windows Event Log service termination or repeated restarts</strong>, using an independent monitoring path where possible.</li>
+  <li><strong>Alert on unexpected Windows Event Log service termination, a persistently stopped service, or repeated restarts</strong>, using an independent monitoring path where possible.</li>
   <li><strong>Measure collection health, not just endpoint health.</strong> A functioning EDR or antivirus service does not guarantee that Windows Event Log-derived SIEM data is complete.</li>
   <li><strong>Correlate multiple telemetry sources</strong>—for example, endpoint telemetry, network monitoring, authentication infrastructure, and collector health signals—to distinguish quiet systems from blind spots.</li>
-  <li><strong>Test the recovery characteristics of collection pipelines</strong> in an authorized lab, including buffering and backfill behavior, rather than assuming restored service means restored evidence.</li>
+  <li><strong>Test the recovery characteristics of collection pipelines</strong> in an authorized lab, including buffering and backfill behavior, rather than assuming that manually restoring service means restoring missing evidence.</li>
   </ol>
   <p>These measures are risk reductions, not a substitute for a vendor-side fix where a vulnerable code path remains reachable.</p>
   <h2>Closing thoughts</h2>
