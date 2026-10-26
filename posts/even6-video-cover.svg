@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+<title id="title">Windows Event Log Goes Dark</title><desc id="desc">1dotq Windows security telemetry demonstration video cover</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101a2d"/><stop offset=".65" stop-color="#070a12"/><stop offset="1" stop-color="#12141c"/></linearGradient><linearGradient id="accent"><stop stop-color="#55aaff"/><stop offset="1" stop-color="#ee5260"/></linearGradient></defs>
+<rect width="1280" height="720" fill="url(#bg)"/>
+<g opacity=".12" stroke="#55aaff" stroke-width="1"><path d="M0 100H1280M0 200H1280M0 300H1280M0 400H1280M0 500H1280M0 600H1280"/><path d="M100 0V720M200 0V720M300 0V720M400 0V720M500 0V720M600 0V720M700 0V720M800 0V720M900 0V720M1000 0V720M1100 0V720M1200 0V720"/></g>
+<rect x="64" y="54" width="1152" height="612" rx="20" fill="none" stroke="#29425d" stroke-width="2"/>
+<text x="100" y="127" font-family="monospace" font-size="28" font-weight="bold" fill="#55aaff">// 1dotq</text>
+<text x="100" y="269" font-family="Arial,sans-serif" font-size="76" font-weight="900" fill="#f4f7ff">WINDOWS EVENT LOG</text>
+<text x="100" y="367" font-family="Arial,sans-serif" font-size="106" font-weight="900" fill="#f25761">GOES DARK</text>
+<text x="100" y="445" font-family="monospace" font-size="23" letter-spacing="2" fill="#a1afc4">MS-EVEN6  /  SECURITY TELEMETRY GAP</text>
+<rect x="100" y="495" width="460" height="83" rx="11" fill="#142a41" stroke="#55aaff"/>
+<polygon points="280,513 280,560 320,537" fill="#55aaff"/>
+<text x="351" y="545" font-family="Arial,sans-serif" font-size="27" fill="#eaf2ff">WATCH THE DEMO</text>
+<path d="M614 558L668 513 721 559 773 474 825 562 880 504 931 560 992 470 1041 560 1129 560" fill="none" stroke="url(#accent)" stroke-width="5"/>
+<text x="100" y="625" font-family="monospace" font-size="21" fill="#66778c">WINDOWS EVENT LOG   •   WAZUH   •   VULN-192344</text>
+</svg>
