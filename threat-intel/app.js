@@ -48,7 +48,7 @@ function render(updateUrl = false) {
   $('page').textContent = `Page ${page} of ${pageCount}`; $('prev').disabled = page === 1; $('next').disabled = page === pageCount;
   $('jump-page').max = String(pageCount); $('jump-page').value = String(page);
   const invalidRange = since.value && until.value && since.value > until.value;
-  $('filter-status').textContent = invalidRange ? 'The start date is after the end date. Adjust the date range.' : (filteredRecords.length !== records.length ? 'Filters are active. Exports include all matching records, not only this page.' : 'Showing the full CISA snapshot.');
+  $('filter-status').textContent = invalidRange ? 'The start date is after the end date. Adjust the date range.' : (filteredRecords.length !== records.length ? 'Filters are active. Exports include all matching records, not only this page.' : 'Showing the collected CISA catalog.');
   $('export-csv').disabled = $('export-json').disabled = !filteredRecords.length;
   results.innerHTML = filteredRecords.slice((page-1)*perPage,page*perPage).map(recordHtml).join('') || '<p class="empty">No records match your filters. Try another term or clear the filters.</p>';
   if (updateUrl) history.replaceState(null,'',stateUrl());
@@ -59,9 +59,9 @@ function validate(data) {
 }
 function init(data) {
   validate(data); records = data.vulnerabilities; const released = String(data.dateReleased || '').slice(0,10); catalogVersion = data.catalogVersion || ''; catalogReleased = data.dateReleased || '';
-  $('catalog-date').textContent = `Snapshot ${data.catalogVersion || 'version unavailable'} · released ${dateValue(released) || 'date unavailable'}`;
-  const age = Math.floor((Date.now()-Date.parse(`${released}T00:00:00Z`))/86400000);
-  $('freshness').textContent = Number.isFinite(age) && age > 7 ? `This snapshot is ${age} days old. Check CISA for newer information.` : (age < 0 ? 'The snapshot release date is ahead of this device’s clock. Check CISA for current data.' : 'Snapshot data can change. Check CISA for the latest information.');
+  $('catalog-date').textContent = `CISA ${data.catalogVersion || 'version unavailable'} · checked ${data.collectedAt ? new Date(data.collectedAt).toLocaleString() : 'time unavailable'}`;
+  const age = Math.floor((Date.now()-Date.parse(data.collectedAt || `${released}T00:00:00Z`))/86400000);
+  $('freshness').textContent = Number.isFinite(age) && age > 1 ? `Our last successful CISA check was ${age} days ago. Verify newer information at CISA.` : (age < 0 ? 'This device clock differs from the source timestamp. Check CISA for current data.' : `CISA released this catalog ${dateValue(released) || 'on an unknown date'}. Source facts can change; verify vendor guidance.`);
   const vendors = [...new Set(records.map(r => r.vendorProject).filter(Boolean))].sort(compare);
   vendors.forEach(v => {const o=document.createElement('option');o.value=v;o.textContent=v;vendor.appendChild(o)});
   $('stat-total').textContent=records.length.toLocaleString(); $('stat-vendors').textContent=vendors.length.toLocaleString();
