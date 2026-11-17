@@ -1,0 +1,1609 @@
+{
+  "retrieved_at": "2026-11-17T03:28:47.198973+00:00",
+  "records": {
+    "CVE-2026-83548": {
+      "sources": {
+        "cve": "https://cveawg.mitre.org/api/cve/CVE-2026-83548",
+        "epss": "https://api.first.org/data/v1/epss?cve=CVE-2026-83548&scope=time-series",
+        "poc": "https://raw.githubusercontent.com/nomi-sec/PoC-in-GitHub/master/2026/CVE-2026-83548.json",
+        "discussions": "https://hn.algolia.com/api/v1/search_by_date?query=CVE-2026-83548&tags=story&hitsPerPage=20"
+      },
+      "errors": {},
+      "cve": {
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.2",
+        "cveMetadata": {
+          "cveId": "CVE-2026-83548",
+          "assignerOrgId": "44b2ff79-1416-4492-88bb-ed0da00c7315",
+          "state": "PUBLISHED",
+          "assignerShortName": "sonicwall",
+          "dateReserved": "2026-08-31T18:15:31.466Z",
+          "datePublished": "2026-09-01T21:25:45.368Z",
+          "dateUpdated": "2026-09-03T03:55:31.337Z"
+        },
+        "containers": {
+          "cna": {
+            "providerMetadata": {
+              "orgId": "44b2ff79-1416-4492-88bb-ed0da00c7315",
+              "shortName": "sonicwall",
+              "dateUpdated": "2026-09-01T21:25:45.368Z"
+            },
+            "datePublic": "2026-09-01T21:17:00.000Z",
+            "problemTypes": [
+              {
+                "descriptions": [
+                  {
+                    "lang": "en",
+                    "cweId": "CWE-918",
+                    "description": "CWE-918 Server-Side request forgery (SSRF)",
+                    "type": "CWE"
+                  }
+                ]
+              },
+              {
+                "descriptions": [
+                  {
+                    "lang": "en",
+                    "cweId": "CWE-441",
+                    "description": "CWE-441 Unintended Proxy or Intermediary ('Confused Deputy')",
+                    "type": "CWE"
+                  }
+                ]
+              }
+            ],
+            "affected": [
+              {
+                "vendor": "SonicWall",
+                "product": "SMA1000",
+                "platforms": [
+                  "Linux"
+                ],
+                "versions": [
+                  {
+                    "status": "affected",
+                    "version": "12.4.3-03453 (platform-hotfix) and older versions"
+                  },
+                  {
+                    "status": "affected",
+                    "version": "12.5.0-02835 (platform-hotfix) and older versions"
+                  }
+                ],
+                "defaultStatus": "unknown"
+              }
+            ],
+            "descriptions": [
+              {
+                "lang": "en",
+                "value": "A Pre-authentication SSRF vulnerability exists in the SMA1000 Appliance Work Place interface due to an unintended alternate access path. A remote unauthenticated attacker could potentially exploit this vulnerability to gain unauthorized access to sensitive functionality and perform unauthorized operations.",
+                "supportingMedia": [
+                  {
+                    "type": "text/html",
+                    "base64": false,
+                    "value": "A Pre-authentication SSRF vulnerability exists in the SMA1000 Appliance Work Place interface due to an unintended alternate access path. A remote unauthenticated attacker could potentially exploit this vulnerability to gain unauthorized access to sensitive functionality and perform unauthorized operations."
+                  }
+                ]
+              }
+            ],
+            "references": [
+              {
+                "url": "https://psirt.global.sonicwall.com/vuln-detail/SNWLID-2026-0016",
+                "tags": [
+                  "vendor-advisory"
+                ]
+              }
+            ],
+            "credits": [
+              {
+                "lang": "en",
+                "value": "Adam Babis of SonicWall PSIRT",
+                "type": "finder"
+              }
+            ],
+            "source": {
+              "advisory": "SNWLID-2026-0016",
+              "discovery": "INTERNAL"
+            },
+            "x_generator": {
+              "engine": "Vulnogram 1.0.5"
+            }
+          },
+          "adp": [
+            {
+              "metrics": [
+                {
+                  "cvssV3_1": {
+                    "scope": "CHANGED",
+                    "version": "3.1",
+                    "baseScore": 10,
+                    "attackVector": "NETWORK",
+                    "baseSeverity": "CRITICAL",
+                    "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+                    "integrityImpact": "HIGH",
+                    "userInteraction": "NONE",
+                    "attackComplexity": "LOW",
+                    "availabilityImpact": "HIGH",
+                    "privilegesRequired": "NONE",
+                    "confidentialityImpact": "HIGH"
+                  }
+                },
+                {
+                  "other": {
+                    "type": "ssvc",
+                    "content": {
+                      "timestamp": "2026-09-01T00:00:00+00:00",
+                      "options": [
+                        {
+                          "Exploitation": "active"
+                        },
+                        {
+                          "Automatable": "yes"
+                        },
+                        {
+                          "Technical Impact": "total"
+                        }
+                      ],
+                      "role": "CISA Coordinator",
+                      "version": "2.0.3",
+                      "id": "CVE-2026-83548"
+                    }
+                  }
+                },
+                {
+                  "other": {
+                    "type": "kev",
+                    "content": {
+                      "dateAdded": "2026-09-02",
+                      "reference": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-83548"
+                    }
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-83548",
+                  "tags": [
+                    "government-resource"
+                  ]
+                }
+              ],
+              "title": "CISA ADP Vulnrichment",
+              "providerMetadata": {
+                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                "shortName": "CISA-ADP",
+                "dateUpdated": "2026-09-03T03:55:31.337Z"
+              },
+              "timeline": [
+                {
+                  "time": "2026-09-02T00:00:00.000Z",
+                  "lang": "en",
+                  "value": "CVE-2026-83548 added to CISA KEV"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "epss": {
+        "status": "OK",
+        "status-code": 200,
+        "version": "1.0",
+        "access": "public",
+        "total": 1,
+        "offset": 0,
+        "limit": 100,
+        "data": [
+          {
+            "cve": "CVE-2026-83548",
+            "epss": "0.080430000",
+            "percentile": "0.948770000",
+            "date": "2026-11-16",
+            "time-series": [
+              {
+                "epss": "0.080430000",
+                "percentile": "0.948760000",
+                "date": "2026-11-15"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94876000",
+                "date": "2026-11-14"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94872000",
+                "date": "2026-11-13"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94865000",
+                "date": "2026-11-12"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94858000",
+                "date": "2026-11-11"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94833000",
+                "date": "2026-11-10"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94826000",
+                "date": "2026-11-09"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94824000",
+                "date": "2026-11-08"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94820000",
+                "date": "2026-11-07"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94812000",
+                "date": "2026-11-06"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94807000",
+                "date": "2026-11-05"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94803000",
+                "date": "2026-11-04"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94795000",
+                "date": "2026-11-03"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94788000",
+                "date": "2026-11-02"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94787000",
+                "date": "2026-11-01"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94786000",
+                "date": "2026-10-31"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94779000",
+                "date": "2026-10-30"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94772000",
+                "date": "2026-10-29"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94766000",
+                "date": "2026-10-28"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94758000",
+                "date": "2026-10-27"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94749000",
+                "date": "2026-10-26"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94748000",
+                "date": "2026-10-25"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94789000",
+                "date": "2026-10-24"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94784000",
+                "date": "2026-10-23"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94778000",
+                "date": "2026-10-22"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94771000",
+                "date": "2026-10-21"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94746000",
+                "date": "2026-10-20"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94742000",
+                "date": "2026-10-19"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94734000",
+                "date": "2026-10-18"
+              },
+              {
+                "epss": "0.08043000",
+                "percentile": "0.94733000",
+                "date": "2026-10-17"
+              }
+            ]
+          }
+        ]
+      },
+      "poc": [
+        {
+          "id": 1355858010,
+          "name": "CVE-2026-83548-SonicWall-SMA1000-Analysis",
+          "full_name": "xoessie/CVE-2026-83548-SonicWall-SMA1000-Analysis",
+          "owner": {
+            "login": "xoessie",
+            "id": 219036837,
+            "avatar_url": "https://avatars.githubusercontent.com/u/219036837?v=4",
+            "html_url": "https://github.com/xoessie",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/xoessie/CVE-2026-83548-SonicWall-SMA1000-Analysis",
+          "description": "Vulnerability Analysis of CVE-2026-83548 affecting SonicWall SMA1000 security systems.",
+          "fork": false,
+          "created_at": "2026-09-03T11:03:36Z",
+          "updated_at": "2026-09-03T11:11:54Z",
+          "pushed_at": "2026-09-03T11:11:23Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        },
+        {
+          "id": 1357367026,
+          "name": "CVE-2026-83548-checker",
+          "full_name": "xcoy0te/CVE-2026-83548-checker",
+          "owner": {
+            "login": "xcoy0te",
+            "id": 247402138,
+            "avatar_url": "https://avatars.githubusercontent.com/u/247402138?v=4",
+            "html_url": "https://github.com/xcoy0te",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/xcoy0te/CVE-2026-83548-checker",
+          "description": "Non-intrusive detector for SonicWall SMA 1000 exposure to CVE-2026-83548/-83549 (version/patch-state check; no exploitation)",
+          "fork": false,
+          "created_at": "2026-09-04T16:30:21Z",
+          "updated_at": "2026-10-07T20:14:11Z",
+          "pushed_at": "2026-10-07T20:14:06Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 1,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [
+            "cve-2026-83548",
+            "kev",
+            "sonicwall"
+          ],
+          "visibility": "public",
+          "forks": 1,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        },
+        {
+          "id": 1361022239,
+          "name": "CVE-2026-83548-CVE-2026-83549",
+          "full_name": "HORKimhab/CVE-2026-83548-CVE-2026-83549",
+          "owner": {
+            "login": "HORKimhab",
+            "id": 41143106,
+            "avatar_url": "https://avatars.githubusercontent.com/u/41143106?v=4",
+            "html_url": "https://github.com/HORKimhab",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/HORKimhab/CVE-2026-83548-CVE-2026-83549",
+          "description": "CVE-2026-83548, CVE-2026-83549, - Draft or TODO - https://github.com/rapid7/metasploit-framework/pull/21883",
+          "fork": false,
+          "created_at": "2026-09-08T06:44:00Z",
+          "updated_at": "2026-09-08T06:45:48Z",
+          "pushed_at": "2026-09-08T06:45:08Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        },
+        {
+          "id": 1433021435,
+          "name": "CVE-2026-83548",
+          "full_name": "maxprog-svg/CVE-2026-83548",
+          "owner": {
+            "login": "maxprog-svg",
+            "id": 180038121,
+            "avatar_url": "https://avatars.githubusercontent.com/u/180038121?v=4",
+            "html_url": "https://github.com/maxprog-svg",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/maxprog-svg/CVE-2026-83548",
+          "description": "CVE-2026-83548 — SonicWall SMA1000 Work Place pre-auth SSRF",
+          "fork": false,
+          "created_at": "2026-10-25T09:20:33Z",
+          "updated_at": "2026-10-25T09:27:56Z",
+          "pushed_at": "2026-10-25T09:27:52Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        },
+        {
+          "id": 1460759282,
+          "name": "CVE-2026-83548-CVE-2026-83549",
+          "full_name": "0xTerror/CVE-2026-83548-CVE-2026-83549",
+          "owner": {
+            "login": "0xTerror",
+            "id": 212302361,
+            "avatar_url": "https://avatars.githubusercontent.com/u/212302361?v=4",
+            "html_url": "https://github.com/0xTerror",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/0xTerror/CVE-2026-83548-CVE-2026-83549",
+          "description": "CVE-2026-83548 + CVE-2026-83549 Sonic Wall SMA1000 Exploit Toolkit",
+          "fork": false,
+          "created_at": "2026-11-17T01:12:35Z",
+          "updated_at": "2026-11-17T01:14:15Z",
+          "pushed_at": "2026-11-17T01:14:11Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        }
+      ],
+      "discussions": {
+        "hits": [],
+        "scope": "Hacker News stories mentioning this exact CVE; latest 20 search hits"
+      }
+    },
+    "CVE-2026-20320": {
+      "sources": {
+        "cve": "https://cveawg.mitre.org/api/cve/CVE-2026-20320",
+        "epss": "https://api.first.org/data/v1/epss?cve=CVE-2026-20320&scope=time-series",
+        "discussions": "https://hn.algolia.com/api/v1/search_by_date?query=CVE-2026-20320&tags=story&hitsPerPage=20"
+      },
+      "errors": {
+        "poc": "HTTP Error 404: Not Found"
+      },
+      "cve": {
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.2",
+        "cveMetadata": {
+          "cveId": "CVE-2026-20320",
+          "assignerOrgId": "d1c1063e-7a18-46af-9102-31f8928bc633",
+          "state": "PUBLISHED",
+          "assignerShortName": "cisco",
+          "dateReserved": "2025-10-08T11:59:15.411Z",
+          "datePublished": "2026-08-19T16:39:04.920Z",
+          "dateUpdated": "2026-11-13T20:49:01.482Z"
+        },
+        "containers": {
+          "cna": {
+            "providerMetadata": {
+              "orgId": "d1c1063e-7a18-46af-9102-31f8928bc633",
+              "shortName": "cisco",
+              "dateUpdated": "2026-11-13T20:49:01.482Z"
+            },
+            "descriptions": [
+              {
+                "lang": "en",
+                "value": "A vulnerability in the Open Client Interface (OCI) XML Parser of Cisco BroadWorks could allow an unauthenticated, remote attacker to read sensitive configuration information on an affected system. \r\n\r This vulnerability exists because XML entries are improperly parsed due to external entity resolution being allowed by default. An attacker could exploit this vulnerability by sending a crafted XML message to the Open Client Interface &ndash; Provisioning (OCI-P) service. A successful exploit could allow the attacker to view sensitive files from the filesystem with the privileges of the Cisco BroadWorks user."
+              }
+            ],
+            "affected": [
+              {
+                "vendor": "Cisco",
+                "product": "Cisco BroadWorks",
+                "versions": [
+                  {
+                    "version": "N/A",
+                    "status": "affected"
+                  }
+                ]
+              }
+            ],
+            "problemTypes": [
+              {
+                "descriptions": [
+                  {
+                    "lang": "en",
+                    "description": "Improper Restriction of XML External Entity Reference",
+                    "type": "cwe",
+                    "cweId": "CWE-611"
+                  }
+                ]
+              }
+            ],
+            "references": [
+              {
+                "url": "https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-bworks-xxe-uwUd7CEt",
+                "name": "cisco-sa-bworks-xxe-uwUd7CEt"
+              }
+            ],
+            "metrics": [
+              {
+                "format": "cvssV3_1",
+                "cvssV3_1": {
+                  "version": "3.1",
+                  "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+                  "baseScore": 7.5,
+                  "baseSeverity": "HIGH",
+                  "attackVector": "NETWORK",
+                  "attackComplexity": "LOW",
+                  "privilegesRequired": "NONE",
+                  "userInteraction": "NONE",
+                  "scope": "UNCHANGED",
+                  "confidentialityImpact": "HIGH",
+                  "integrityImpact": "NONE",
+                  "availabilityImpact": "NONE"
+                }
+              }
+            ],
+            "exploits": [
+              {
+                "lang": "en",
+                "value": "In November 2026, this vulnerability was added to the Known Exploited Vulnerability (KEV) database of the U.S. Cybersecurity and Infrastructure Security Agency (CISA)."
+              }
+            ],
+            "source": {
+              "advisory": "cisco-sa-bworks-xxe-uwUd7CEt",
+              "discovery": "EXTERNAL",
+              "defects": [
+                "CSCwv48590"
+              ]
+            }
+          },
+          "adp": [
+            {
+              "metrics": [
+                {
+                  "other": {
+                    "type": "ssvc",
+                    "content": {
+                      "timestamp": "2026-11-10T00:00:00+00:00",
+                      "options": [
+                        {
+                          "Exploitation": "active"
+                        },
+                        {
+                          "Automatable": "yes"
+                        },
+                        {
+                          "Technical Impact": "partial"
+                        }
+                      ],
+                      "role": "CISA Coordinator",
+                      "version": "2.0.3",
+                      "id": "CVE-2026-20320"
+                    }
+                  }
+                },
+                {
+                  "other": {
+                    "type": "kev",
+                    "content": {
+                      "dateAdded": "2026-11-10",
+                      "reference": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-20320"
+                    }
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "url": "https://malbearlabs.com/posts/operation-snowball-inside-an-autonomous-ai-intrusion-campaign",
+                  "tags": [
+                    "third-party-advisory"
+                  ]
+                },
+                {
+                  "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-20320",
+                  "tags": [
+                    "government-resource"
+                  ]
+                }
+              ],
+              "title": "CISA ADP Vulnrichment",
+              "providerMetadata": {
+                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                "shortName": "CISA-ADP",
+                "dateUpdated": "2026-11-11T04:55:47.088Z"
+              },
+              "timeline": [
+                {
+                  "time": "2026-11-10T00:00:00.000Z",
+                  "lang": "en",
+                  "value": "CVE-2026-20320 added to CISA KEV"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "epss": {
+        "status": "OK",
+        "status-code": 200,
+        "version": "1.0",
+        "access": "public",
+        "total": 1,
+        "offset": 0,
+        "limit": 100,
+        "data": [
+          {
+            "cve": "CVE-2026-20320",
+            "epss": "0.009760000",
+            "percentile": "0.626610000",
+            "date": "2026-11-16",
+            "time-series": [
+              {
+                "epss": "0.009760000",
+                "percentile": "0.626550000",
+                "date": "2026-11-15"
+              },
+              {
+                "epss": "0.00976000",
+                "percentile": "0.62656000",
+                "date": "2026-11-14"
+              },
+              {
+                "epss": "0.00976000",
+                "percentile": "0.62634000",
+                "date": "2026-11-13"
+              },
+              {
+                "epss": "0.00820000",
+                "percentile": "0.57739000",
+                "date": "2026-11-12"
+              },
+              {
+                "epss": "0.00820000",
+                "percentile": "0.57690000",
+                "date": "2026-11-11"
+              },
+              {
+                "epss": "0.00385000",
+                "percentile": "0.32917000",
+                "date": "2026-11-10"
+              },
+              {
+                "epss": "0.00385000",
+                "percentile": "0.32865000",
+                "date": "2026-11-09"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42763000",
+                "date": "2026-11-08"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42740000",
+                "date": "2026-11-07"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42684000",
+                "date": "2026-11-06"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42652000",
+                "date": "2026-11-05"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42626000",
+                "date": "2026-11-04"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42550000",
+                "date": "2026-11-03"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42495000",
+                "date": "2026-11-02"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42506000",
+                "date": "2026-11-01"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42513000",
+                "date": "2026-10-31"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42483000",
+                "date": "2026-10-30"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42419000",
+                "date": "2026-10-29"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42358000",
+                "date": "2026-10-28"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42288000",
+                "date": "2026-10-27"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42215000",
+                "date": "2026-10-26"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.42199000",
+                "date": "2026-10-25"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41640000",
+                "date": "2026-10-24"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41611000",
+                "date": "2026-10-23"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41573000",
+                "date": "2026-10-22"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41515000",
+                "date": "2026-10-21"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41271000",
+                "date": "2026-10-20"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41222000",
+                "date": "2026-10-19"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41142000",
+                "date": "2026-10-18"
+              },
+              {
+                "epss": "0.00495000",
+                "percentile": "0.41147000",
+                "date": "2026-10-17"
+              }
+            ]
+          }
+        ]
+      },
+      "discussions": {
+        "hits": [],
+        "scope": "Hacker News stories mentioning this exact CVE; latest 20 search hits"
+      }
+    },
+    "CVE-2026-114713": {
+      "sources": {
+        "cve": "https://cveawg.mitre.org/api/cve/CVE-2026-114713",
+        "epss": "https://api.first.org/data/v1/epss?cve=CVE-2026-114713&scope=time-series",
+        "poc": "https://raw.githubusercontent.com/nomi-sec/PoC-in-GitHub/master/2026/CVE-2026-114713.json",
+        "discussions": "https://hn.algolia.com/api/v1/search_by_date?query=CVE-2026-114713&tags=story&hitsPerPage=20"
+      },
+      "errors": {},
+      "cve": {
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.2",
+        "cveMetadata": {
+          "cveId": "CVE-2026-114713",
+          "assignerOrgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+          "state": "PUBLISHED",
+          "assignerShortName": "mitre",
+          "dateReserved": "2026-10-22T00:56:41.381Z",
+          "datePublished": "2026-11-08T02:31:48.387Z",
+          "dateUpdated": "2026-11-14T04:56:44.537Z"
+        },
+        "containers": {
+          "cna": {
+            "affected": [
+              {
+                "defaultStatus": "unaffected",
+                "modules": [
+                  "labeled-response"
+                ],
+                "product": "UnrealIRCd",
+                "programFiles": [
+                  "src/modules/labeled-response.c"
+                ],
+                "programRoutines": [
+                  {
+                    "name": "labeled_response_mtag_is_ok()"
+                  }
+                ],
+                "repo": "https://github.com/unrealircd/unrealircd",
+                "vendor": "UnrealIRCd",
+                "versions": [
+                  {
+                    "lessThan": "6.2.7.1",
+                    "status": "affected",
+                    "version": "0",
+                    "versionType": "custom"
+                  }
+                ]
+              }
+            ],
+            "descriptions": [
+              {
+                "lang": "en",
+                "value": "The labeled-response module in UnrealIRCd 6.0.0 before 6.2.7.1 does not escape the IRCv3 \"label\" message tag when echoing it into replies, which allows any user on a network with two or more linked servers to inject server-to-server commands that are executed with server authority."
+              }
+            ],
+            "metrics": [
+              {
+                "cvssV3_1": {
+                  "attackComplexity": "LOW",
+                  "attackVector": "NETWORK",
+                  "availabilityImpact": "NONE",
+                  "baseScore": 8.6,
+                  "baseSeverity": "HIGH",
+                  "confidentialityImpact": "NONE",
+                  "integrityImpact": "HIGH",
+                  "privilegesRequired": "NONE",
+                  "scope": "CHANGED",
+                  "userInteraction": "NONE",
+                  "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:N/I:H/A:N",
+                  "version": "3.1"
+                },
+                "format": "CVSS",
+                "scenarios": [
+                  {
+                    "lang": "en",
+                    "value": "GENERAL"
+                  }
+                ]
+              }
+            ],
+            "problemTypes": [
+              {
+                "descriptions": [
+                  {
+                    "cweId": "CWE-140",
+                    "description": "CWE-140 Improper Neutralization of Delimiters",
+                    "lang": "en",
+                    "type": "CWE"
+                  }
+                ]
+              }
+            ],
+            "providerMetadata": {
+              "orgId": "8254265b-2729-46b6-b9e3-3dfca2d5bfca",
+              "shortName": "mitre",
+              "dateUpdated": "2026-11-08T02:31:48.387Z"
+            },
+            "references": [
+              {
+                "url": "https://www.unrealircd.org/"
+              },
+              {
+                "url": "https://www.unrealircd.org/index/news"
+              },
+              {
+                "url": "https://forums.unrealircd.org/viewtopic.php?t=9487"
+              }
+            ],
+            "solutions": [
+              {
+                "lang": "en",
+                "supportingMedia": [
+                  {
+                    "base64": false,
+                    "type": "text/html",
+                    "value": "Upgrade to UnrealIRCd 6.2.7.1 or later. Alternatively, apply the hot-patch to fix the issue without restart: ./unrealircd hot-patch bundle-20261107"
+                  }
+                ],
+                "value": "Upgrade to UnrealIRCd 6.2.7.1 or later. Alternatively, apply the hot-patch to fix the issue without restart: ./unrealircd hot-patch bundle-20261107"
+              }
+            ],
+            "workarounds": [
+              {
+                "lang": "en",
+                "supportingMedia": [
+                  {
+                    "base64": false,
+                    "type": "text/html",
+                    "value": "Add the following line to the configuration file of all servers until the patch or upgrade is applied: blacklist-module \"labeled-response\";"
+                  }
+                ],
+                "value": "Add the following line to the configuration file of all servers until the patch or upgrade is applied: blacklist-module \"labeled-response\";"
+              }
+            ],
+            "x_generator": {
+              "engine": "CVE-Request-form 0.0.1"
+            },
+            "cpeApplicability": [
+              {
+                "nodes": [
+                  {
+                    "operator": "OR",
+                    "negate": false,
+                    "cpeMatch": [
+                      {
+                        "vulnerable": true,
+                        "criteria": "cpe:2.3:a:unrealircd:unrealircd:*:*:*:*:*:*:*:*",
+                        "versionEndExcluding": "6.2.7.1"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "adp": [
+            {
+              "title": "CVE Program Container",
+              "references": [
+                {
+                  "url": "http://www.openwall.com/lists/oss-security/2026/11/08/1"
+                }
+              ],
+              "providerMetadata": {
+                "orgId": "af854a3a-2127-422b-91ae-364da2661108",
+                "shortName": "CVE",
+                "dateUpdated": "2026-11-08T11:04:43.329Z"
+              }
+            },
+            {
+              "metrics": [
+                {
+                  "other": {
+                    "type": "ssvc",
+                    "content": {
+                      "timestamp": "2026-11-12T00:00:00+00:00",
+                      "options": [
+                        {
+                          "Exploitation": "active"
+                        },
+                        {
+                          "Automatable": "yes"
+                        },
+                        {
+                          "Technical Impact": "total"
+                        }
+                      ],
+                      "role": "CISA Coordinator",
+                      "version": "2.0.3",
+                      "id": "CVE-2026-114713"
+                    }
+                  }
+                },
+                {
+                  "other": {
+                    "type": "kev",
+                    "content": {
+                      "dateAdded": "2026-11-13",
+                      "reference": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-114713"
+                    }
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-114713",
+                  "tags": [
+                    "government-resource"
+                  ]
+                }
+              ],
+              "title": "CISA ADP Vulnrichment",
+              "providerMetadata": {
+                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                "shortName": "CISA-ADP",
+                "dateUpdated": "2026-11-14T04:56:44.537Z"
+              },
+              "timeline": [
+                {
+                  "time": "2026-11-13T00:00:00.000Z",
+                  "lang": "en",
+                  "value": "CVE-2026-114713 added to CISA KEV"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "epss": {
+        "status": "OK",
+        "status-code": 200,
+        "version": "1.0",
+        "access": "public",
+        "total": 1,
+        "offset": 0,
+        "limit": 100,
+        "data": [
+          {
+            "cve": "CVE-2026-114713",
+            "epss": "0.005080000",
+            "percentile": "0.438720000",
+            "date": "2026-11-16",
+            "time-series": [
+              {
+                "epss": "0.005080000",
+                "percentile": "0.438750000",
+                "date": "2026-11-15"
+              },
+              {
+                "epss": "0.00508000",
+                "percentile": "0.43896000",
+                "date": "2026-11-14"
+              },
+              {
+                "epss": "0.00302000",
+                "percentile": "0.23297000",
+                "date": "2026-11-13"
+              },
+              {
+                "epss": "0.00302000",
+                "percentile": "0.23299000",
+                "date": "2026-11-12"
+              },
+              {
+                "epss": "0.00302000",
+                "percentile": "0.23275000",
+                "date": "2026-11-11"
+              },
+              {
+                "epss": "0.00302000",
+                "percentile": "0.23217000",
+                "date": "2026-11-10"
+              },
+              {
+                "epss": "0.00302000",
+                "percentile": "0.23170000",
+                "date": "2026-11-09"
+              },
+              {
+                "epss": "0.00293000",
+                "percentile": "0.21991000",
+                "date": "2026-11-08"
+              }
+            ]
+          }
+        ]
+      },
+      "poc": [
+        {
+          "id": 1457381613,
+          "name": "unrealircd-scanner",
+          "full_name": "foxcornlab/unrealircd-scanner",
+          "owner": {
+            "login": "foxcornlab",
+            "id": 43523802,
+            "avatar_url": "https://avatars.githubusercontent.com/u/43523802?v=4",
+            "html_url": "https://github.com/foxcornlab",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/foxcornlab/unrealircd-scanner",
+          "description": "Detection-only triage for UnrealIRCd CVE-2026-114713 (CVSS 8.6, CISA KEV 2026-11-13, actively exploited): IRCv3 label newline injection, fixed in 6.2.7.1 / hot-patch bundle-20261107. Grades versions from the server banner, local install, or inventory.",
+          "fork": false,
+          "created_at": "2026-11-14T04:30:46Z",
+          "updated_at": "2026-11-14T04:31:19Z",
+          "pushed_at": "2026-11-14T04:31:16Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [
+            "cve-2026-114713",
+            "detection",
+            "irc",
+            "ircv3",
+            "kev",
+            "security",
+            "triage",
+            "unrealircd",
+            "vulnerability-scanner"
+          ],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        },
+        {
+          "id": 1457590683,
+          "name": "CVE-2026-114713-POC",
+          "full_name": "fixedbyreboot/CVE-2026-114713-POC",
+          "owner": {
+            "login": "fixedbyreboot",
+            "id": 321131125,
+            "avatar_url": "https://avatars.githubusercontent.com/u/321131125?v=4",
+            "html_url": "https://github.com/fixedbyreboot",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/fixedbyreboot/CVE-2026-114713-POC",
+          "description": "POC for CVE-2026-114713 - IRCv3 label-tag injection in UnrealIRCd escalating an unprivileged client message to server-to-server command authority on linked-server networks. Vulnerable 6.2.7 vs fixed 6.2.7.1 controls included.",
+          "fork": false,
+          "created_at": "2026-11-14T09:29:14Z",
+          "updated_at": "2026-11-14T09:44:28Z",
+          "pushed_at": "2026-11-14T09:29:18Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [
+            "command-injection",
+            "cve",
+            "exploit",
+            "irc",
+            "ircv3",
+            "poc",
+            "python",
+            "security",
+            "unrealircd",
+            "vulnerability"
+          ],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        },
+        {
+          "id": 1457760031,
+          "name": "CVE-2026-114713",
+          "full_name": "Sable-Research/CVE-2026-114713",
+          "owner": {
+            "login": "Sable-Research",
+            "id": 347979164,
+            "avatar_url": "https://avatars.githubusercontent.com/u/347979164?v=4",
+            "html_url": "https://github.com/Sable-Research",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/Sable-Research/CVE-2026-114713",
+          "description": "Research on CVE-2026-114713 — UnrealIRCd labeled-response module: unescaped IRCv3 label tag allows any user to inject server-to-server commands with full server authority (CWE-140). Actively exploited, CISA KEV.",
+          "fork": false,
+          "created_at": "2026-11-14T13:04:29Z",
+          "updated_at": "2026-11-15T15:50:13Z",
+          "pushed_at": "2026-11-14T13:06:31Z",
+          "stargazers_count": 2,
+          "watchers_count": 2,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 2,
+          "score": 0,
+          "subscribers_count": 0
+        }
+      ],
+      "discussions": {
+        "hits": [],
+        "scope": "Hacker News stories mentioning this exact CVE; latest 20 search hits"
+      }
+    },
+    "CVE-2026-123039": {
+      "sources": {
+        "cve": "https://cveawg.mitre.org/api/cve/CVE-2026-123039",
+        "epss": "https://api.first.org/data/v1/epss?cve=CVE-2026-123039&scope=time-series",
+        "poc": "https://raw.githubusercontent.com/nomi-sec/PoC-in-GitHub/master/2026/CVE-2026-123039.json",
+        "discussions": "https://hn.algolia.com/api/v1/search_by_date?query=CVE-2026-123039&tags=story&hitsPerPage=20"
+      },
+      "errors": {},
+      "cve": {
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.2",
+        "cveMetadata": {
+          "cveId": "CVE-2026-123039",
+          "assignerOrgId": "897c38be-0345-43cd-b6cf-fe179e0c4f45",
+          "state": "PUBLISHED",
+          "assignerShortName": "checkpoint",
+          "dateReserved": "2026-11-05T07:30:18.138Z",
+          "datePublished": "2026-11-12T14:02:13.665Z",
+          "dateUpdated": "2026-11-14T04:56:46.064Z"
+        },
+        "containers": {
+          "cna": {
+            "affected": [
+              {
+                "product": "Quantum Security Gateway",
+                "vendor": "checkpoint",
+                "versions": [
+                  {
+                    "status": "affected",
+                    "version": "R82.10 with Jumbo Hotfix Take 50 or below"
+                  },
+                  {
+                    "status": "affected",
+                    "version": "R82.20 with Jumbo Hotfix Take 10 or below"
+                  },
+                  {
+                    "status": "affected",
+                    "version": "R82 with Jumbo Hotfix Take 130 or below"
+                  },
+                  {
+                    "status": "affected",
+                    "version": "R81.20 with Jumbo Hotfix Take 173 or below"
+                  }
+                ]
+              },
+              {
+                "product": "Quantum Security Management",
+                "vendor": "checkpoint",
+                "versions": [
+                  {
+                    "status": "affected",
+                    "version": "R82.10 with Jumbo Hotfix Take 50 or below"
+                  },
+                  {
+                    "status": "affected",
+                    "version": "R82.20 with Jumbo Hotfix Take 10 or below"
+                  },
+                  {
+                    "status": "affected",
+                    "version": "R82 with Jumbo Hotfix Take 130 or below"
+                  },
+                  {
+                    "status": "affected",
+                    "version": "R81.20 with Jumbo Hotfix Take 173 or below"
+                  }
+                ]
+              }
+            ],
+            "title": "Local privilege escalation to root in the DynamicCLI daemon via local world-writable control socket",
+            "descriptions": [
+              {
+                "lang": "en",
+                "value": "The Gaia OS DynamicCLI daemon runs as root and listens on a world-writable local socket (/tmp/dynamic_socket) without authenticating connecting processes. An authenticated local user can send a command to the socket and have it executed as root."
+              }
+            ],
+            "problemTypes": [
+              {
+                "descriptions": [
+                  {
+                    "cweId": "CWE-862",
+                    "description": "CWE-862: Missing Authorization.",
+                    "lang": "en",
+                    "type": "CWE"
+                  },
+                  {
+                    "cweId": "CWE-732",
+                    "description": "CWE-732: Incorrect Permission Assignment for Critical Resource.",
+                    "lang": "en",
+                    "type": "CWE"
+                  }
+                ]
+              }
+            ],
+            "providerMetadata": {
+              "orgId": "897c38be-0345-43cd-b6cf-fe179e0c4f45",
+              "shortName": "checkpoint",
+              "dateUpdated": "2026-11-12T14:02:13.665Z"
+            },
+            "references": [
+              {
+                "url": "https://support.checkpoint.com/results/sk/sk1000362"
+              }
+            ],
+            "metrics": [
+              {
+                "format": "CVSS",
+                "scenarios": [
+                  {
+                    "lang": "en",
+                    "value": "GENERAL"
+                  }
+                ],
+                "cvssV3_1": {
+                  "version": "3.1",
+                  "attackVector": "LOCAL",
+                  "attackComplexity": "LOW",
+                  "privilegesRequired": "LOW",
+                  "userInteraction": "NONE",
+                  "scope": "UNCHANGED",
+                  "confidentialityImpact": "HIGH",
+                  "integrityImpact": "HIGH",
+                  "availabilityImpact": "HIGH",
+                  "baseScore": 7.8,
+                  "baseSeverity": "HIGH",
+                  "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+                }
+              }
+            ],
+            "x_generator": {
+              "engine": "cvelib 1.8.0"
+            }
+          },
+          "adp": [
+            {
+              "metrics": [
+                {
+                  "other": {
+                    "type": "ssvc",
+                    "content": {
+                      "timestamp": "2026-11-13T00:00:00+00:00",
+                      "options": [
+                        {
+                          "Exploitation": "active"
+                        },
+                        {
+                          "Automatable": "no"
+                        },
+                        {
+                          "Technical Impact": "total"
+                        }
+                      ],
+                      "role": "CISA Coordinator",
+                      "version": "2.0.3",
+                      "id": "CVE-2026-123039"
+                    }
+                  }
+                },
+                {
+                  "other": {
+                    "type": "kev",
+                    "content": {
+                      "dateAdded": "2026-11-13",
+                      "reference": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-123039"
+                    }
+                  }
+                }
+              ],
+              "references": [
+                {
+                  "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-123039",
+                  "tags": [
+                    "government-resource"
+                  ]
+                }
+              ],
+              "title": "CISA ADP Vulnrichment",
+              "providerMetadata": {
+                "orgId": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
+                "shortName": "CISA-ADP",
+                "dateUpdated": "2026-11-14T04:56:46.064Z"
+              },
+              "timeline": [
+                {
+                  "time": "2026-11-13T00:00:00.000Z",
+                  "lang": "en",
+                  "value": "CVE-2026-123039 added to CISA KEV"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "epss": {
+        "status": "OK",
+        "status-code": 200,
+        "version": "1.0",
+        "access": "public",
+        "total": 1,
+        "offset": 0,
+        "limit": 100,
+        "data": [
+          {
+            "cve": "CVE-2026-123039",
+            "epss": "0.021910000",
+            "percentile": "0.827410000",
+            "date": "2026-11-16",
+            "time-series": [
+              {
+                "epss": "0.021910000",
+                "percentile": "0.827360000",
+                "date": "2026-11-15"
+              },
+              {
+                "epss": "0.02191000",
+                "percentile": "0.82739000",
+                "date": "2026-11-14"
+              },
+              {
+                "epss": "0.01274000",
+                "percentile": "0.70349000",
+                "date": "2026-11-13"
+              }
+            ]
+          }
+        ]
+      },
+      "poc": [
+        {
+          "id": 1456102665,
+          "name": "CVE-2026-123039",
+          "full_name": "googlesky/CVE-2026-123039",
+          "owner": {
+            "login": "googlesky",
+            "id": 4094347,
+            "avatar_url": "https://avatars.githubusercontent.com/u/4094347?v=4",
+            "html_url": "https://github.com/googlesky",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/googlesky/CVE-2026-123039",
+          "description": "Containerised PoC for CVE-2026-123039: the Check Point Gaia OS Dynamic CLI daemon publishes /tmp/dynamic_socket world-writable and authenticates no caller, so any local user escalates to root. Differential lab (affected vs patched), 4-mode PoC, 0day sweep.",
+          "fork": false,
+          "created_at": "2026-11-13T03:22:26Z",
+          "updated_at": "2026-11-13T19:27:01Z",
+          "pushed_at": "2026-11-13T05:39:48Z",
+          "stargazers_count": 3,
+          "watchers_count": 3,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [
+            "af-unix",
+            "check-point",
+            "cve-2026-123039",
+            "cwe-732",
+            "cwe-862",
+            "dynamic-cli",
+            "gaia-os",
+            "ipc",
+            "local-privilege-escalation",
+            "poc",
+            "privilege-escalation",
+            "proof-of-concept",
+            "security-research",
+            "unix-socket",
+            "vulnerability-research"
+          ],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 3,
+          "score": 0,
+          "subscribers_count": 0
+        },
+        {
+          "id": 1459533298,
+          "name": "checkpoint-gaia-scanner",
+          "full_name": "foxcornlab/checkpoint-gaia-scanner",
+          "owner": {
+            "login": "foxcornlab",
+            "id": 43523802,
+            "avatar_url": "https://avatars.githubusercontent.com/u/43523802?v=4",
+            "html_url": "https://github.com/foxcornlab",
+            "user_view_type": "public"
+          },
+          "html_url": "https://github.com/foxcornlab/checkpoint-gaia-scanner",
+          "description": "Detection-only triage for Check Point Gaia CVE-2026-123039 (DynamicCLI root privesc, CISA KEV 2026-11-13, due 2026-11-16). Grades Gaia releases against the November Jumbo Hotfix takes and checks /tmp/dynamic_socket permissions. No payloads, no exploit traffic.",
+          "fork": false,
+          "created_at": "2026-11-16T04:19:48Z",
+          "updated_at": "2026-11-16T04:20:17Z",
+          "pushed_at": "2026-11-16T04:20:13Z",
+          "stargazers_count": 0,
+          "watchers_count": 0,
+          "has_discussions": false,
+          "forks_count": 0,
+          "allow_forking": true,
+          "is_template": false,
+          "web_commit_signoff_required": false,
+          "has_pull_requests": true,
+          "pull_request_creation_policy": "all",
+          "topics": [
+            "checkpoint",
+            "cve-2026-123039",
+            "detection",
+            "dynamiccli",
+            "gaia",
+            "jumbo-hotfix",
+            "kev",
+            "privilege-escalation",
+            "security-scanner",
+            "triage"
+          ],
+          "visibility": "public",
+          "forks": 0,
+          "watchers": 0,
+          "score": 0,
+          "subscribers_count": 0
+        }
+      ],
+      "discussions": {
+        "hits": [],
+        "scope": "Hacker News stories mentioning this exact CVE; latest 20 search hits"
+      }
+    }
+  }
+}
