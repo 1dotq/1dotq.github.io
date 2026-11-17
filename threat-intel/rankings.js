@@ -25,8 +25,8 @@ function draw(){
   for(const entry of shown){
     const row=document.createElement('div');row.className='rank-row';
     const rank=document.createElement('span');rank.className='rank-number';rank.textContent=String(ranked.indexOf(entry)+1).padStart(2,'0');
-    const middle=document.createElement('div'),name=document.createElement('div'),meta=document.createElement('div'),bar=document.createElement('div'),fill=document.createElement('span');
-    name.className='rank-name';name.textContent=entry.name;meta.className='rank-meta';meta.textContent=`Latest addition ${entry.latest} · ${entry.ransomware} marked for known ransomware use`;
+    const middle=document.createElement('div'),name=document.createElement('a'),meta=document.createElement('div'),bar=document.createElement('div'),fill=document.createElement('span');
+    name.className='rank-name';name.textContent=entry.name;name.href='index.html?q='+encodeURIComponent(entry.name)+'#catalog';meta.className='rank-meta';meta.textContent=`Latest addition ${entry.latest} · ${entry.ransomware} marked for known ransomware use`;
     bar.className='rank-bar';fill.style.width=(entry.count/max*100).toFixed(1)+'%';bar.append(fill);middle.append(name,meta,bar);
     const count=document.createElement('div');count.className='rank-count';count.textContent=entry.count.toLocaleString();const small=document.createElement('small');small.textContent='KEV entries';count.append(small);
     row.append(rank,middle,count);list.append(row);
