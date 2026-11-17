@@ -14,11 +14,23 @@ function chart(points,label,percent=false){
   const x=p=>55+(Date.parse(p.date)-min)/Math.max(86400000,max-min)*590,y=p=>190-p.y/ceiling*150;
   return `<svg class="chart" viewBox="0 0 700 245" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><path d="M55 40V190H645" fill="none" stroke="#adbed2"/><path d="M55 115H645M55 40H645" stroke="#e2e9f2"/><text x="10" y="44">${ceiling}${percent?'%':''}</text><text x="24" y="194">0</text>${percent ? `<polyline points="${sorted.map(p=>x(p)+','+y(p)).join(' ')}" fill="none" stroke="#0057d6" stroke-width="3"/>` : sorted.map(p=>`<rect x="${x(p)-5}" y="${y(p)}" width="10" height="${190-y(p)}" fill="#0057d6"/>`).join('')}${sorted.map(p=>`<circle cx="${x(p)}" cy="${y(p)}" r="4" fill="#0057d6"><title>${esc(p.date)}: ${p.y.toFixed(2)}${percent?'%':''}</title></circle>`).join('')}<text x="55" y="220">${esc(sorted[0].date)}</text><text x="550" y="220">${esc(sorted.at(-1).date)}</text></svg><details><summary>View chart data</summary><div class="table-scroll"><table><thead><tr><th>Date</th><th>${esc(label)}</th></tr></thead><tbody>${sorted.map(p=>`<tr><td>${esc(p.date)}</td><td>${p.y.toFixed(2)}${percent?'%':''}</td></tr>`).join('')}</tbody></table></div></details>`;
 }
+async function renderDossier(){
+  const response=await fetch('dossiers/'+encodeURIComponent(id)+'.json',{cache:'no-store'});
+  if(!response.ok)throw Error('This CVE dossier is not available yet. Browse the latest signals for source links.');
+  const d=await response.json();
+  if(d.cve_id!==id)throw Error('CVE dossier identifier did not match.');
+  const score=Number(d.cvss?.score),ep=Number(d.epss?.score);
+  const sources=(d.sources||[]).filter(s=>https(s.url)).slice(0,20);
+  const affected=(d.affected||[]).flatMap(g=>(g.items||[]).map(a=>[a.vendor,a.product,a.package?.name].filter(Boolean).join(' / '))).filter(Boolean).slice(0,20);
+  document.title=id+' | 1DOTQ Threat Intel';
+  document.getElementById('dossier').innerHTML=`<p class="eyebrow blue">VULNERABILITY INTELLIGENCE / ${esc(id)}</p><h1>${esc(d.title||id)}</h1><p class="lede">${esc(d.summary||'Review the original source records for the current description.')}</p><p class="stamp">Source-backed editorial dossier · Updated ${esc(date(d.modified))} · Verify current vendor guidance before acting</p><div class="metric-grid"><div class="metric"><small>CISA KEV</small><strong>${d.kev?'Listed':'Not established here'}</strong><small>${d.kev?'Known exploitation':'Check CISA for current listing'}</small></div><div class="metric"><small>CVSS · SOURCE RATING</small><strong>${Number.isFinite(score)?esc(score)+' / 10':'Not collected'}</strong><small>${esc(d.severity||'Unscored')}</small></div><div class="metric"><small>EPSS · 30-DAY PROBABILITY</small><strong>${Number.isFinite(ep)?(ep*100).toFixed(2)+'%':'Not collected'}</strong><small>Prediction, not observed attacks</small></div></div><nav class="detail-nav" aria-label="CVE sections"><a href="#sources">Original sources</a><a href="#affected">Affected products</a><a href="#action">Response</a><a href="signals.html">Latest signals</a></nav><section id="sources"><h2>Original sources</h2><p>Source claims may change. Open the original notices for current scope and remediation.</p>${sources.map(s=>`<div class="evidence-item">${link(s.url,s.name||new URL(s.url).hostname)}<small>${esc(s.url)}</small></div>`).join('')||empty('Source links were not included in this dossier.')}</section><section id="affected"><h2>Affected products</h2>${affected.length?`<ul>${affected.map(a=>`<li>${esc(a)}</li>`).join('')}</ul>`:empty('Product and version detail has not been collected. Consult the original notice.')}</section><section id="action"><h2>Response</h2><p>${esc(d.action||'Compare your deployed versions with the vendor advisory and follow its current guidance.')}</p></section>`;
+  document.getElementById('loading').hidden=true;
+}
 async function main(){
   if(!/^CVE-\d{4}-\d{4,}$/.test(id||''))throw Error('Choose a valid CVE from the catalog.');
   const response=await fetch('kev.json');if(!response.ok)throw Error('Catalog unavailable.');
   const catalog=await response.json(),r=catalog.vulnerabilities.find(r=>r.cveID===id);
-  if(!r)throw Error('This CVE is not in the collected KEV catalog. Browse the catalog to choose a record.');
+  if(!r)return renderDossier();
   let bundle={records:{}};
   try{const q=await fetch('intelligence.json');if(q.ok)bundle=await q.json()}catch{}
   let current={records:{}};
