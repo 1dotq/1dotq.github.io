@@ -10,7 +10,7 @@ function draw(){
   for(const r of selected){
     const name=group==='vendor'?r.vendorProject:r.vendorProject+' / '+r.product;
     const key=name.trim()||'Unspecified in CISA';
-    const current=grouped.get(key)||{name:key,count:0,latest:'',ransomware:0};
+    const current=grouped.get(key)||{name:key,vendor:r.vendorProject,product:r.product,count:0,latest:'',ransomware:0};
     current.count++;current.latest=current.latest>date(r.dateAdded)?current.latest:date(r.dateAdded);
     if(String(r.knownRansomwareCampaignUse).toLowerCase()==='known')current.ransomware++;
     grouped.set(key,current);
@@ -26,7 +26,7 @@ function draw(){
     const row=document.createElement('div');row.className='rank-row';
     const rank=document.createElement('span');rank.className='rank-number';rank.textContent=String(ranked.indexOf(entry)+1).padStart(2,'0');
     const middle=document.createElement('div'),name=document.createElement('a'),meta=document.createElement('div'),bar=document.createElement('div'),fill=document.createElement('span');
-    name.className='rank-name';name.textContent=entry.name;name.href='index.html?q='+encodeURIComponent(entry.name)+'#catalog';meta.className='rank-meta';meta.textContent=`Latest addition ${entry.latest} · ${entry.ransomware} marked for known ransomware use`;
+    name.className='rank-name';name.textContent=entry.name;name.href='index.html?'+new URLSearchParams(group==='vendor'?{q:entry.vendor}:{q:entry.vendor,product:entry.product})+'#catalog';meta.className='rank-meta';meta.textContent=`Latest addition ${entry.latest} · ${entry.ransomware} marked for known ransomware use`;
     bar.className='rank-bar';fill.style.width=(entry.count/max*100).toFixed(1)+'%';bar.append(fill);middle.append(name,meta,bar);
     const count=document.createElement('div');count.className='rank-count';count.textContent=entry.count.toLocaleString();const small=document.createElement('small');small.textContent='KEV entries';count.append(small);
     row.append(rank,middle,count);list.append(row);
