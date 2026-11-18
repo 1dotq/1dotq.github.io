@@ -4,7 +4,7 @@
   const el=(tag,text,cls)=>{const x=document.createElement(tag);x.textContent=text;if(cls)x.className=cls;return x;};
   const svg=(tag,attrs)=>{const x=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))x.setAttribute(k,v);return x;};
   function neighbors(id){return (adj.get(id)||[]).sort((a,b)=>{
-    const order={campaign:0,malware:1,tool:2,technique:3,actor:4};return order[lookup.get(a.id)?.type]-order[lookup.get(b.id)?.type];
+    const order={vulnerability:0,sector:1,incident:2,campaign:3,malware:4,tool:5,technique:6,actor:7};return order[lookup.get(a.id)?.type]-order[lookup.get(b.id)?.type];
   });}
   function show(id){
     if(!lookup.has(id))return;focus=id;const center=lookup.get(id),items=neighbors(id),visible=items.slice(0,limit),canvas=$('graph-canvas');
@@ -31,13 +31,14 @@
     if(center.aliases?.length)detail.append(el('p','Also known as: '+center.aliases.join(', ')));
     if(center.description)detail.append(el('p',center.description.replace(/\[(\d+)\]/g,'')));
     const link=el('a','Open MITRE ATT&CK record ↗');link.href=center.url;link.target='_blank';link.rel='noopener noreferrer';detail.append(link);
-    const groups=new Map();for(const edge of items){const n=lookup.get(edge.id);if(!groups.has(n.type))groups.set(n.type,[]);groups.get(n.type).push(n);}
+    const groups=new Map();for(const edge of items){const n=lookup.get(edge.id);if(!groups.has(n.type))groups.set(n.type,[]);groups.get(n.type).push({node:n,edge});}
     const rel=$('graph-relationships');rel.replaceChildren();
-    for(const [type,nodes] of groups){const section=el('section','','graph-group');section.append(el('h3',type[0].toUpperCase()+type.slice(1)+' · '+nodes.length));
-      const ul=document.createElement('ul');for(const n of nodes.slice(0,12)){const li=document.createElement('li'),button=el('button',n.name,'live-button');button.type='button';button.onclick=()=>{limit=18;show(n.id)};li.append(button);ul.append(li)}
+    for(const [type,entries] of groups){const section=el('section','','graph-group');section.append(el('h3',type[0].toUpperCase()+type.slice(1)+' · '+entries.length));
+      const ul=document.createElement('ul');for(const {node:n,edge} of entries.slice(0,12)){const li=document.createElement('li'),button=el('button',n.name,'live-button');button.type='button';button.onclick=()=>{limit=18;show(n.id)};li.append(button);
+        if(edge.evidence==='CISA joint advisory'){const citation=el('a','CISA evidence ↗');citation.href=edge.url;citation.target='_blank';citation.rel='noopener noreferrer';li.append(citation)}ul.append(li)}
       section.append(ul);rel.append(section);
     }
-    if(center.type==='actor'){
+    if(center.type==='actor' && !['vulnerability','sector','incident'].some(type=>groups.has(type))){
       const gap=el('div','','graph-group');gap.append(el('h3','CVEs, sectors, related incidents'),el('p','No direct, verified links are published for this actor. Shared techniques and time overlap are not evidence of attribution.'));rel.append(gap);
     }
   }
