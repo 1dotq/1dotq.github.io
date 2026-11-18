@@ -1,7 +1,7 @@
 :root{color-scheme:dark;--navy:#071427;--blue:#61a0ff;--slate:#a8bad2;--paper:#09182c;--line:#29415f;--ink:#edf4ff;--surface:#10243d;--surface-raised:#152d4a;--muted:#b5c5d9}
 body{background:#071427;color:var(--ink)}
-header{background:#09182c;border-bottom:1px solid #29415f}
-.brand{background:transparent;border:0;border-radius:0;padding:0;width:116px;height:116px;flex-basis:116px;flex-shrink:0;box-shadow:none}.brand img{width:116px;height:116px;filter:grayscale(1) invert(1) contrast(2);mix-blend-mode:screen}
+header{background:#0b1f3b;border-bottom:1px solid #29415f}
+.brand{background:transparent;border:0;border-radius:0;padding:0;width:116px;height:116px;flex-basis:116px;flex-shrink:0;box-shadow:none}.brand img{width:116px;height:116px;filter:none;mix-blend-mode:normal}
 .nav{gap:25px}.nav nav a,.nav-cta{color:#e9f2ff}.nav-cta{border-color:#567291}.nav nav a[aria-current=page]{color:#8fbcff;text-decoration:underline;text-underline-offset:8px}
 .hero,.signals-hero,.rank-hero{background:linear-gradient(135deg,#061326 0%,#0b2547 70%,#123e72 100%)}
 .hero-panel{background:#102b4b;border-color:#42628a}
