@@ -90,3 +90,8 @@ $('export-csv').addEventListener('click',()=>{clearTimeout(timer);render(true);i
 document.addEventListener('keydown',event=>{const tag=event.target.tagName;if(event.key==='/' && !event.ctrlKey && !event.metaKey && !event.altKey && !['INPUT','TEXTAREA','SELECT'].includes(tag)){event.preventDefault();search.focus();status('Search focused')} });
 $('jump-page').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();$('jump').click()}});
 window.addEventListener('popstate',()=>{if(dataReady){applyParams();render()}});
+function quickFilter(days,known=false){clearTimeout(timer);search.value='';vendor.value='';product.value='';until.value='';sort.value='recent';since.value=days?new Date(Date.now()-days*86400000).toISOString().slice(0,10):'';ransomware.value=known?'known':'';page=1;render(true);$('filter-status').scrollIntoView({block:'nearest'})}
+$('quick-week').addEventListener('click',()=>quickFilter(7));
+$('quick-month').addEventListener('click',()=>quickFilter(30));
+$('quick-ransomware').addEventListener('click',()=>quickFilter(0,true));
+$('quick-all').addEventListener('click',()=>quickFilter(0));
