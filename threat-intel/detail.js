@@ -6,13 +6,25 @@ const id=new URLSearchParams(location.search).get('id');
 const cisa='https://www.cisa.gov/known-exploited-vulnerabilities-catalog';
 const empty=text=>`<p class="empty-state">${esc(text)}</p>`;
 const date=v=>v?String(v).slice(0,10):'Not collected';
+function metadata(title,description){
+  document.title=title+' | 1DOTQ Threat Intel';
+  let canonical=document.querySelector('link[rel="canonical"]');
+  if(!canonical){canonical=document.createElement('link');canonical.rel='canonical';document.head.append(canonical)}
+  canonical.href='https://1dotq.github.io/threat-intel/cve.html?id='+encodeURIComponent(id);
+  for(const [selector,attribute,key,content] of [
+    ['meta[name="description"]','name','description',description],
+    ['meta[property="og:title"]','property','og:title',document.title],
+    ['meta[property="og:description"]','property','og:description',description],
+    ['meta[property="og:url"]','property','og:url',canonical.href]
+  ]){let tag=document.querySelector(selector);if(!tag){tag=document.createElement('meta');tag.setAttribute(attribute,key);document.head.append(tag)}tag.content=String(content||'').slice(0,240)}
+}
 function chart(points,label,percent=false){
   if(!points.length)return empty('No observations collected for this series. This does not mean no activity.');
   const sorted=points.filter(p=>Number.isFinite(p.y)&&Number.isFinite(Date.parse(p.date))).sort((a,b)=>a.date.localeCompare(b.date));
   if(!sorted.length)return empty('No valid dated observations available.');
   const min=Date.parse(sorted[0].date),max=Date.parse(sorted.at(-1).date),ceiling=percent?100:Math.max(1,...sorted.map(p=>p.y));
   const x=p=>55+(Date.parse(p.date)-min)/Math.max(86400000,max-min)*590,y=p=>190-p.y/ceiling*150;
-  return `<svg class="chart" viewBox="0 0 700 245" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><path d="M55 40V190H645" fill="none" stroke="#adbed2"/><path d="M55 115H645M55 40H645" stroke="#e2e9f2"/><text x="10" y="44">${ceiling}${percent?'%':''}</text><text x="24" y="194">0</text>${percent ? `<polyline points="${sorted.map(p=>x(p)+','+y(p)).join(' ')}" fill="none" stroke="#0057d6" stroke-width="3"/>` : sorted.map(p=>`<rect x="${x(p)-5}" y="${y(p)}" width="10" height="${190-y(p)}" fill="#0057d6"/>`).join('')}${sorted.map(p=>`<circle cx="${x(p)}" cy="${y(p)}" r="4" fill="#0057d6"><title>${esc(p.date)}: ${p.y.toFixed(2)}${percent?'%':''}</title></circle>`).join('')}<text x="55" y="220">${esc(sorted[0].date)}</text><text x="550" y="220">${esc(sorted.at(-1).date)}</text></svg><details><summary>View chart data</summary><div class="table-scroll"><table><thead><tr><th>Date</th><th>${esc(label)}</th></tr></thead><tbody>${sorted.map(p=>`<tr><td>${esc(p.date)}</td><td>${p.y.toFixed(2)}${percent?'%':''}</td></tr>`).join('')}</tbody></table></div></details>`;
+  return `<svg class="chart" viewBox="0 0 700 245" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title><path d="M55 40V190H645" fill="none" stroke="#8da6c2"/><path d="M55 115H645M55 40H645" stroke="#33506d"/><text x="10" y="44">${ceiling}${percent?'%':''}</text><text x="24" y="194">0</text>${percent ? `<polyline points="${sorted.map(p=>x(p)+','+y(p)).join(' ')}" fill="none" stroke="#61a0ff" stroke-width="3"/>` : sorted.map(p=>`<rect x="${x(p)-5}" y="${y(p)}" width="10" height="${190-y(p)}" fill="#61a0ff"/>`).join('')}${sorted.map(p=>`<circle cx="${x(p)}" cy="${y(p)}" r="4" fill="#61a0ff"><title>${esc(p.date)}: ${p.y.toFixed(2)}${percent?'%':''}</title></circle>`).join('')}<text x="55" y="220">${esc(sorted[0].date)}</text><text x="550" y="220">${esc(sorted.at(-1).date)}</text></svg><details><summary>View chart data</summary><div class="table-scroll"><table><thead><tr><th>Date</th><th>${esc(label)}</th></tr></thead><tbody>${sorted.map(p=>`<tr><td>${esc(p.date)}</td><td>${p.y.toFixed(2)}${percent?'%':''}</td></tr>`).join('')}</tbody></table></div></details>`;
 }
 async function renderDossier(){
   const response=await fetch('dossiers/'+encodeURIComponent(id)+'.json',{cache:'no-store'});
@@ -22,7 +34,7 @@ async function renderDossier(){
   const score=Number(d.cvss?.score),ep=Number(d.epss?.score);
   const sources=(d.sources||[]).filter(s=>https(s.url)).slice(0,20);
   const affected=(d.affected||[]).flatMap(g=>(g.items||[]).map(a=>[a.vendor,a.product,a.package?.name].filter(Boolean).join(' / '))).filter(Boolean).slice(0,20);
-  document.title=id+' | 1DOTQ Threat Intel';
+  metadata(d.title||id,d.summary||'Public-source CVE intelligence.');
   document.getElementById('dossier').innerHTML=`<p class="eyebrow blue">VULNERABILITY INTELLIGENCE / ${esc(id)}</p><h1>${esc(d.title||id)}</h1><p class="lede">${esc(d.summary||'Review the original source records for the current description.')}</p><p class="stamp">Source-backed editorial dossier · Updated ${esc(date(d.modified))} · Verify current vendor guidance before acting</p><div class="metric-grid"><div class="metric"><small>CISA KEV</small><strong>${d.kev?'Listed':'Not established here'}</strong><small>${d.kev?'Known exploitation':'Check CISA for current listing'}</small></div><div class="metric"><small>CVSS · SOURCE RATING</small><strong>${Number.isFinite(score)?esc(score)+' / 10':'Not collected'}</strong><small>${esc(d.severity||'Unscored')}</small></div><div class="metric"><small>EPSS · 30-DAY PROBABILITY</small><strong>${Number.isFinite(ep)?(ep*100).toFixed(2)+'%':'Not collected'}</strong><small>Prediction, not observed attacks</small></div></div><nav class="detail-nav" aria-label="CVE sections"><a href="#sources">Original sources</a><a href="#affected">Affected products</a><a href="#action">Response</a><a href="signals.html">Latest signals</a></nav><section id="sources"><h2>Original sources</h2><p>Source claims may change. Open the original notices for current scope and remediation.</p>${sources.map(s=>`<div class="evidence-item">${link(s.url,s.name||new URL(s.url).hostname)}<small>${esc(s.url)}</small></div>`).join('')||empty('Source links were not included in this dossier.')}</section><section id="affected"><h2>Affected products</h2>${affected.length?`<ul>${affected.map(a=>`<li>${esc(a)}</li>`).join('')}</ul>`:empty('Product and version detail has not been collected. Consult the original notice.')}</section><section id="action"><h2>Response</h2><p>${esc(d.action||'Compare your deployed versions with the vendor advisory and follow its current guidance.')}</p></section>`;
   document.getElementById('loading').hidden=true;
 }
@@ -58,7 +70,7 @@ async function main(){
     ...repos.filter(p=>p.created_at).map(p=>({date:p.created_at,title:'Indexed repository created',url:p.html_url,detail:p.full_name+' — creation date, not verified first exploit publication'}))
   ].sort((a,b)=>a.date.localeCompare(b.date));
   const related=catalog.vulnerabilities.filter(x=>x.cveID!==id&&x.vendorProject===r.vendorProject).sort((a,b)=>(Number(b.product===r.product)-Number(a.product===r.product))||b.dateAdded.localeCompare(a.dateAdded)).slice(0,6);
-  document.title=id+' | 1dotq Threat Intel';
+  metadata(r.vulnerabilityName,r.shortDescription);
   document.getElementById('dossier').innerHTML=`
     <p class="eyebrow blue">VULNERABILITY INTELLIGENCE / ${esc(id)}</p><h1>${esc(r.vulnerabilityName)}</h1>
     <p class="lede">${esc(r.shortDescription)}</p><p class="stamp">CISA catalog ${esc(catalog.catalogVersion)} · Enrichment checked ${live.cve?.checked_at?esc(date(live.cve.checked_at))+' UTC':e.cve?esc(date(bundle.retrieved_at))+' UTC':'not collected for this CVE'} · Source-derived, not editorially reviewed</p>
@@ -77,6 +89,10 @@ async function main(){
       ['Is the deadline for everyone?', 'The '+r.dueDate+' date is a CISA remediation deadline for covered federal agencies. Assess your own response according to exposure and vendor guidance.']
     ].map(([q,a])=>`<details class="question"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</section>
     <section id="related"><h2>Related vulnerabilities</h2><p class="note">Same vendor in the KEV catalog, with same-product matches first. These links do not establish an exploit chain.</p>${related.map(x=>`<a class="related" href="cve.html?id=${encodeURIComponent(x.cveID)}"><b>${esc(x.cveID)} ↗</b><span>${esc(x.vulnerabilityName)} · ${x.product===r.product?'Same product':'Same vendor'}</span></a>`).join('')||empty('No same-vendor records in this snapshot.')}</section>`;
+  const actions=document.createElement('div');actions.className='research-actions';
+  for(const [href,label] of [['compare.html?ids='+encodeURIComponent(id),'Compare this CVE →'],['watchlist.html?cve='+encodeURIComponent(id),'Add to watchlist →'],['explore.html?vendor='+encodeURIComponent(r.vendorProject||''),'Explore vendor →']]){const a=document.createElement('a');a.href=href;a.textContent=label;actions.append(a)}
+  const copy=document.createElement('button');copy.type='button';copy.textContent='Copy CVE link';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(location.href);copy.textContent='Link copied'}catch{copy.textContent='Copy URL from address bar'}});actions.append(copy);
+  document.getElementById('dossier').querySelector('.metric-grid')?.after(actions);
   document.getElementById('loading').hidden=true;
   for(const name of ['epss','repo'])document.getElementById(name+'-tab').addEventListener('click',()=>{for(const n of ['epss','repo']){document.getElementById(n+'-panel').hidden=n!==name;document.getElementById(n+'-tab').setAttribute('aria-pressed',String(n===name))}});
 }
