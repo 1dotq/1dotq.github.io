@@ -9,13 +9,14 @@
       const [a,b]=await Promise.allSettled([fetch('public-operations.json',{cache:'no-cache'}),fetch('public-feed.json',{cache:'no-cache'})]);
       if(a.status!=='fulfilled'||!a.value.ok)throw Error('public operations feed unavailable');
       operations=await a.value.json();
+      document.dispatchEvent(new CustomEvent('ioda-snapshot',{detail:operations}));
       if(b.status==='fulfilled'&&b.value.ok) signals=await b.value.json().catch(()=>null);
       $('live-stamp').textContent='Published '+date(operations.generated_at)+' · auto refresh every 5 minutes';
       const providers=[...new Set(operations.incidents.map(x=>x.provider))].sort();const picker=$('outage-provider'),old=picker.value;
       picker.replaceChildren();const all=make('option','All monitored providers');all.value='all';picker.append(all);
       for(const p of providers){const o=make('option',p);o.value=p;picker.append(o)}picker.value=providers.includes(old)?old:'all';
       render();
-    }catch(e){$('live-stamp').textContent='Outage snapshot unavailable: '+e.message;$('outage-list').textContent='Check provider status pages directly.'}
+    }catch(e){$('live-stamp').textContent='Outage snapshot unavailable: '+e.message;$('outage-list').textContent='Check provider status pages directly.';if(!operations)document.dispatchEvent(new CustomEvent('ioda-snapshot',{detail:null}));}
   }
   function render(){if(!operations)return;const all=operations.incidents||[];
     $('outage-total').textContent=all.length;$('outage-open').textContent=all.filter(open).length;$('outage-alerts').textContent=(operations.alerts||[]).length;
