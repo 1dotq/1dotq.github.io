@@ -156,6 +156,16 @@
   });
   new ResizeObserver(draw).observe(viewport);
 
+  function showAllAlerts() {
+    windowPicker.value = '24';
+    levelPicker.value = 'all';
+    finder.value = '';
+    history.replaceState(null, '', location.pathname + location.hash);
+    reset();
+    render();
+    windowPicker.focus();
+  }
+
   async function load() {
     if (!snapshot) $('live-stamp').textContent = 'Loading public snapshot…';
     try {
@@ -164,10 +174,13 @@
       const data = await response.json();
       if (!Number.isFinite(Date.parse(data.generated_at)) || !Array.isArray(data.alerts)) throw new Error('Invalid snapshot');
       snapshot = data;
-      const available = data.sources?.some(source => source.source === 'ioda' && source.status === 'ok');
-      $('live-stamp').textContent = available
-        ? 'Snapshot ' + format.format(new Date(data.generated_at)) + ' · Refreshes every 5 minutes'
-        : 'IODA alerts unavailable in this snapshot';
+      const status = data.sources?.find(source => source.source === 'ioda')?.status;
+      const until = format.format(new Date(data.ioda_window?.until || data.generated_at));
+      const message = {
+        ok: 'Snapshot through ' + until,
+        stale: 'IODA refresh delayed · Last successful snapshot through ' + until,
+      };
+      $('live-stamp').textContent = message[status] || 'IODA alerts unavailable in this snapshot';
       render();
     } catch (_) {
       $('live-stamp').textContent = snapshot
@@ -179,15 +192,19 @@
 
   function render() {
     if (!snapshot) return;
-    const end = Date.parse(snapshot.generated_at);
+    const end = Date.parse(snapshot.ioda_window?.until || snapshot.generated_at);
+    const start = Date.parse(snapshot.ioda_window?.from) || end - 24 * 3_600_000;
     const interval = windowPicker.value === 'chart' ? chartInterval
       : {from: end - Number(windowPicker.value) * 3_600_000, to: end};
     const level = levelPicker.value;
     const query = finder.value.trim().toLowerCase();
+    const sourceStatus = snapshot.sources?.find(source => source.source === 'ioda')?.status;
+    const hasData = ['ok', 'stale'].includes(sourceStatus);
+    const outside = interval.to <= start || interval.from >= end;
+    const includeEnd = windowPicker.value !== 'chart' || fromUrl.get('last') === '1';
     groups = new Map();
-    for (const alert of snapshot.alerts) {
+    for (const alert of hasData ? snapshot.alerts : []) {
       const time = Date.parse(alert.time);
-      const includeEnd = windowPicker.value !== 'chart' || fromUrl.get('last') === '1';
       const allowed = time >= interval.from && (time < interval.to || includeEnd && time === interval.to);
       const matches = alert.country?.toLowerCase().includes(query) || alert.country_code?.toLowerCase() === query;
       if (!allowed || !matches || (level !== 'all' && alert.level !== level)) continue;
@@ -196,9 +213,9 @@
       groups.get(alert.country_code).push(alert);
     }
     const all = [...groups.values()].flat();
-    $('map-country-count').textContent = groups.size;
-    $('map-alert-count').textContent = all.length;
-    $('map-critical-count').textContent = all.filter(alert => alert.level === 'critical').length;
+    $('map-country-count').textContent = hasData && !outside ? groups.size : '—';
+    $('map-alert-count').textContent = hasData && !outside ? all.length : '—';
+    $('map-critical-count').textContent = hasData && !outside ? all.filter(alert => alert.level === 'critical').length : '—';
     const list = $('map-list');
     const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
     const listItems = [];
@@ -228,8 +245,18 @@
     overlay.replaceChildren(...markers.map(marker => marker.button));
     list.replaceChildren(...listItems);
     if (!ordered.length) {
-      const sourceOk = snapshot.sources?.some(source => source.source === 'ioda' && source.status === 'ok');
-      list.append(node('p', sourceOk ? 'No located alerts match these filters.' : 'IODA alert data is unavailable.', 'live-empty'));
+      const empty = node('div', '', 'live-empty');
+      const detail = !hasData ? 'IODA alert data is unavailable.' : outside
+        ? 'This interval is outside the current snapshot.'
+        : 'No alerts match this time window and filters.';
+      empty.append(node('p', detail));
+      if (hasData && (windowPicker.value !== '24' || query || level !== 'all')) {
+        const button = node('button', 'Show last 24 hours', 'live-button');
+        button.type = 'button';
+        button.addEventListener('click', showAllAlerts);
+        empty.append(button);
+      }
+      list.append(empty);
       $('map-detail').textContent = 'No country selected.';
       draw();
       return;

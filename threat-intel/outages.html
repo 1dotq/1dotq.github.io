@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B1F3B"><meta name="description" content="Provider-reported cloud, DNS, CDN, and infrastructure incidents alongside Internet connectivity alerts."><title>Global Outage Observatory | 1DOTQ Threat Intel</title><link rel="canonical" href="https://1dotq.github.io/threat-intel/outages.html"><link rel="stylesheet" href="style.css?v=20261117-dark"><link rel="stylesheet" href="dark.css?v=5"><link rel="stylesheet" href="research.css?v=1"><link rel="stylesheet" href="live-tools.css?v=2"><link rel="icon" type="image/png" href="brand-dark-v1.png"><link rel="stylesheet" href="observatory.css?v=1"><script defer src="observatory.js?v=1"></script><link rel="stylesheet" href="live-views.css?v=1"><script defer src="ioda-chart.js?v=1"></script><script defer src="outages.js?v=3"></script></head><body><a class="skip-link" href="#live-main">Skip to Global Outage Observatory</a><header><div class="nav wrap"><a class="brand" href="index.html" aria-label="1DOTQ home"><img src="brand-dark-v1.png" alt="1DOTQ Threat Intel" width="150" height="150"></a><nav aria-label="Main navigation"><a href="today.html">Today</a><a href="index.html#catalog">KEV catalog</a><a href="map.html">Live map</a><a href="graph.html">Threat graph</a><a href="outages.html" aria-current="page">Outages</a><details class="nav-more"><summary>More ▾</summary><div><a href="signals.html">Signals</a><a href="explore.html">Explore</a><a href="rankings.html">Rankings</a><a href="compare.html">Compare CVEs</a><a href="watchlist.html">Watchlist</a><a href="sources.html">Sources</a></div></details></nav></div></header><main id="live-main"><section class="live-hero"><div class="wrap"><p class="live-kicker">1DOTQ / GLOBAL OUTAGE OBSERVATORY</p><h1>Global Outage <em>Observatory</em></h1><p>See which services are reachable, where checks are failing, and what providers have reported.</p><p id="live-stamp" class="live-stamp" role="status">Loading public snapshot…</p></div></section><div class="wrap live-main">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B1F3B"><meta name="description" content="Provider-reported cloud, DNS, CDN, and infrastructure incidents alongside Internet connectivity alerts."><title>Global Outage Observatory | 1DOTQ Threat Intel</title><link rel="canonical" href="https://1dotq.github.io/threat-intel/outages.html"><link rel="stylesheet" href="style.css?v=20261117-dark"><link rel="stylesheet" href="dark.css?v=5"><link rel="stylesheet" href="research.css?v=1"><link rel="stylesheet" href="live-tools.css?v=2"><link rel="icon" type="image/png" href="brand-dark-v1.png"><link rel="stylesheet" href="observatory.css?v=1"><script defer src="observatory.js?v=1"></script><link rel="stylesheet" href="live-views.css?v=2"><script defer src="ioda-chart.js?v=2"></script><script defer src="outages.js?v=3"></script></head><body><a class="skip-link" href="#live-main">Skip to Global Outage Observatory</a><header><div class="nav wrap"><a class="brand" href="index.html" aria-label="1DOTQ home"><img src="brand-dark-v1.png" alt="1DOTQ Threat Intel" width="150" height="150"></a><nav aria-label="Main navigation"><a href="today.html">Today</a><a href="index.html#catalog">KEV catalog</a><a href="map.html">Live map</a><a href="graph.html">Threat graph</a><a href="outages.html" aria-current="page">Outages</a><details class="nav-more"><summary>More ▾</summary><div><a href="signals.html">Signals</a><a href="explore.html">Explore</a><a href="rankings.html">Rankings</a><a href="compare.html">Compare CVEs</a><a href="watchlist.html">Watchlist</a><a href="sources.html">Sources</a></div></details></nav></div></header><main id="live-main"><section class="live-hero"><div class="wrap"><p class="live-kicker">1DOTQ / GLOBAL OUTAGE OBSERVATORY</p><h1>Global Outage <em>Observatory</em></h1><p>See which services are reachable, where checks are failing, and what providers have reported.</p><p id="live-stamp" class="live-stamp" role="status">Loading public snapshot…</p></div></section><div class="wrap live-main">
 <section class="signal-chart" aria-labelledby="ioda-title">
   <div class="signal-chart-head">
     <div><h2 id="ioda-title">Internet disruption signals</h2><p>Published IODA connectivity alerts by time interval</p></div>
@@ -9,12 +9,25 @@
   </div>
   <p id="ioda-chart-empty" role="status">Loading connectivity alerts…</p>
   <div id="ioda-chart-body" hidden>
+    <div class="signal-summary">
+      <div><strong id="ioda-total">—</strong><span>Recorded alerts</span></div>
+      <div><strong id="ioda-critical">—</strong><span>Critical alerts</span></div>
+      <div><strong id="ioda-countries">—</strong><span>Countries with alerts</span></div>
+    </div>
+    <div class="signal-plot-caption">
+      <div class="map-legend"><span class="map-warning-key">Warning</span><span class="map-critical-key">Critical</span></div>
+      <p id="ioda-snapshot-status"></p>
+    </div>
+    <div class="signal-plot" role="group" aria-label="Connectivity alerts per interval">
+      <div id="ioda-ticks" class="signal-ticks" aria-hidden="true"></div>
+      <div class="signal-grid" aria-hidden="true"></div>
+      <div id="ioda-bars" class="signal-bars"></div>
+    </div>
+    <div class="signal-axis" aria-hidden="true"><span id="ioda-chart-start"></span><span id="ioda-chart-middle"></span><span id="ioda-chart-end"></span></div>
     <div class="signal-readout">
-      <div><strong id="ioda-chart-value"></strong><span id="ioda-chart-time"></span></div>
+      <div><span>Selected interval</span><strong id="ioda-chart-value"></strong><span id="ioda-chart-time"></span></div>
       <a id="ioda-chart-selection" href="map.html">View interval on map →</a>
     </div>
-    <canvas id="ioda-chart" aria-hidden="true"></canvas>
-    <div class="signal-axis" aria-hidden="true"><span id="ioda-chart-start">24h before</span><span id="ioda-chart-middle">12h before</span><span>Snapshot time</span></div>
     <div class="signal-scrubber"><label for="ioda-interval">Explore intervals</label><input id="ioda-interval" type="range" min="0" max="23" step="1" value="0"></div>
   </div>
 </section>
