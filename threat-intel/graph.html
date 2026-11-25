@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0B1F3B">
+  <meta name="theme-color" content="#0B1015">
   <meta name="description" content="Explore cited relationships among threat actors, campaigns, malware, techniques, vulnerabilities, and incidents.">
   <title>Threat Graph Explorer | 1DOTQ Threat Intel</title>
   <link rel="canonical" href="https://1dotq.github.io/threat-intel/graph.html">
@@ -11,11 +11,11 @@
   <link rel="stylesheet" href="dark.css?v=5">
   <link rel="stylesheet" href="research.css?v=2">
   <link rel="stylesheet" href="live-tools.css?v=2">
-  <link rel="stylesheet" href="graph.css?v=1">
+  <link rel="stylesheet" href="graph.css?v=2">
   <link rel="icon" type="image/png" href="brand-dark-v1.png">
-  <script defer src="graph.js?v=4"></script>
+  <script defer src="graph.js?v=5"></script>
 </head>
-<body>
+<body class="graph-page">
   <a class="skip-link" href="#live-main">Skip to Threat Graph Explorer</a>
   <header><div class="nav wrap">
     <a class="brand" href="index.html" aria-label="1DOTQ home"><img src="brand-dark-v1.png" alt="1DOTQ Threat Intel" width="150" height="150"></a>
@@ -24,7 +24,6 @@
   <main id="live-main" class="wrap graph-workspace">
     <section class="graph-intro">
       <h1>Threat Graph Explorer</h1>
-      <p>Trace documented relationships between actors, campaigns, malware, CVEs, and incidents.</p>
       <p class="live-stamp" id="live-stamp" role="status">Loading the public graph…</p>
     </section>
 
@@ -37,7 +36,8 @@
         <button id="actor-find" type="submit">Search</button>
       </form>
       <div id="graph-matches" class="graph-matches" hidden></div>
-      <div class="live-bar graph-filters">
+      <button id="graph-mobile-filters" type="button" aria-expanded="false" aria-controls="graph-filters">Filters &amp; date</button>
+      <div id="graph-filters" class="live-bar graph-filters">
         <label for="graph-type">Connected entity
           <select id="graph-type">
             <option value="">All types</option>
@@ -61,19 +61,34 @@
     <div class="graph-layout">
       <section class="live-panel graph-stage" aria-labelledby="graph-stage-title">
         <div class="graph-stage-header">
-          <div><h2 id="graph-stage-title" tabindex="-1">Connections</h2><p id="graph-count" role="status"></p></div>
-          <button class="live-button" id="graph-back" type="button" disabled>Back one step</button>
+          <div><h2 id="graph-stage-title" tabindex="-1">Relationship map</h2><p id="graph-count" role="status"></p></div>
+          <div class="graph-navigation">
+            <button class="live-button" id="graph-back" type="button" disabled>← Back</button>
+            <button class="live-button" id="graph-next-actor" type="button" disabled>Another actor →</button>
+          </div>
         </div>
-        <p class="graph-help" id="graph-guide">Select a node to explore its connections. Select a line to open its citations.</p>
-        <svg id="graph-canvas" class="graph-canvas" viewBox="0 0 760 500" role="group" aria-label="Interactive threat relationships" aria-describedby="graph-guide"></svg>
-        <div class="graph-legend" aria-label="Relationship line styles">
-          <span class="graph-key">One publisher</span><span class="graph-key multiple">Multiple publishers</span><span class="graph-key unresolved">Publisher unavailable</span>
+        <div id="graph-clusters" class="graph-clusters" role="group" aria-label="Filter connections by type"></div>
+        <div class="graph-map">
+          <svg id="graph-canvas" class="graph-canvas" viewBox="0 0 960 590" role="group" aria-label="Interactive threat relationships" aria-describedby="graph-guide" tabindex="0"></svg>
+          <svg class="graph-overview" id="graph-overview" viewBox="0 0 960 590" aria-hidden="true"></svg>
         </div>
+        <div class="graph-map-footer">
+          <div class="graph-zoom" role="group" aria-label="Map zoom">
+            <button type="button" id="graph-zoom-out" aria-label="Zoom out">−</button>
+            <output id="graph-scale">100%</output>
+            <button type="button" id="graph-zoom-in" aria-label="Zoom in">+</button>
+            <button type="button" id="graph-zoom-reset">Reset view</button>
+          </div>
+          <div class="graph-legend" aria-label="Relationship line styles">
+            <span class="graph-key">One publisher</span><span class="graph-key multiple">Multiple publishers</span><span class="graph-key unresolved">Publisher unavailable</span>
+          </div>
+        </div>
+        <p class="graph-help" id="graph-guide">Select a node to explore. Select a line for citations. Zoom in to drag or pan with the arrow keys.</p>
       </section>
       <aside class="live-panel graph-sidebar" aria-label="Entity and relationship evidence">
         <div id="graph-detail" class="live-detail"></div>
         <p id="graph-active-edge" class="graph-help" role="status" hidden></p>
-        <h2 id="graph-evidence-title" tabindex="-1">Relationship evidence</h2>
+        <div class="graph-evidence-header"><h2 id="graph-evidence-title" tabindex="-1">Relationship evidence</h2><output id="graph-evidence-count"></output></div>
         <div id="graph-relationships" aria-labelledby="graph-evidence-title"></div>
         <div class="graph-pagination">
           <button class="live-button" id="graph-prev" type="button" hidden>Previous relationships</button>
