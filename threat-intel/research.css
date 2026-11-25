@@ -2,3 +2,22 @@
 .record-side .ransomware-badge{background:#5f2f27;color:#ffd2c0}.compare-table th:first-child{min-width:150px}.compare-table td{min-width:180px;max-width:360px;overflow-wrap:anywhere}.research-card .research-button{display:inline-block;margin-top:12px;width:auto}.featured-intel .research-actions{min-width:250px}.nav-more summary:focus-visible{outline:3px solid #ffcd70;outline-offset:3px}
 .rank-explore{display:inline-block;margin-top:8px;color:#91bdff;font-size:11px;font-weight:700}
 @media(max-width:480px){.nav nav a:nth-child(2){display:inline}}
+
+/* CVE decision strip and retained revisions */
+.dossier .cve-summary { grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr)); margin-bottom: 14px; }
+.cve-summary .metric { overflow-wrap: anywhere; }
+.cve-summary .metric strong { margin-block: 8px; }
+.dossier .cve-summary .cve-urgency { border-top: 3px solid #8fbcff; }
+.dossier .cve-summary [data-level="Critical"] { border-top-color: #ff788d; }
+.dossier .cve-summary [data-level="High"] { border-top-color: #ffc879; }
+.dossier .cve-summary [data-level="Elevated"] { border-top-color: #8fbcff; }
+.dossier .cve-summary [data-level="Low"] { border-top-color: #7fe3bc; }
+.cve-urgency a { display: inline-block; margin-top: 10px; font-size: .8rem; }
+.cve-next-action { background: #152d4a; border-inline-start: 3px solid #8fbcff; padding: 12px 16px; }
+.cve-next-action p { margin: 4px 0 0; }
+.dossier .cve-score-details { border-top: 0; }
+.cve-changes details { margin-top: 8px; }
+.cve-diff { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; margin: 8px 0 14px; }
+.cve-diff div { padding: 12px; background: #152d4a; border: 1px solid var(--line); overflow-wrap: anywhere; }
+.cve-diff dt { color: #b5c5d9; font-weight: 700; }
+.cve-diff dd { margin: 4px 0 0; }

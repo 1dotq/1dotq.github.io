@@ -1,1 +1,90 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0B1F3B"><meta name="description" content="Investigate documented MITRE ATT&CK actor, campaign, software, and technique relationships."><title>Threat Graph Explorer | 1DOTQ Threat Intel</title><link rel="canonical" href="https://1dotq.github.io/threat-intel/graph.html"><link rel="stylesheet" href="style.css?v=20261117-dark"><link rel="stylesheet" href="dark.css?v=5"><link rel="stylesheet" href="research.css?v=1"><link rel="stylesheet" href="live-tools.css?v=2"><link rel="icon" type="image/png" href="brand-dark-v1.png"><script defer src="graph.js?v=2"></script></head><body><a class="skip-link" href="#live-main">Skip to Threat Graph Explorer</a><header><div class="nav wrap"><a class="brand" href="index.html" aria-label="1DOTQ home"><img src="brand-dark-v1.png" alt="1DOTQ Threat Intel" width="150" height="150"></a><nav aria-label="Main navigation"><a href="today.html">Today</a><a href="index.html#catalog">KEV catalog</a><a href="map.html">Live map</a><a href="graph.html" aria-current="page">Threat graph</a><a href="outages.html">Outages</a><details class="nav-more"><summary>More ▾</summary><div><a href="signals.html">Signals</a><a href="explore.html">Explore</a><a href="rankings.html">Rankings</a><a href="compare.html">Compare CVEs</a><a href="watchlist.html">Watchlist</a><a href="sources.html">Sources</a></div></details></nav></div></header><main id="live-main"><section class="live-hero"><div class="wrap"><p class="live-kicker">1DOTQ / THREAT GRAPH EXPLORER</p><h1>Follow the <em>evidence.</em></h1><p>Start with a threat actor, then expand documented ATT&CK relationships. Every visible connection comes from the MITRE dataset.</p><p id="live-stamp" class="live-stamp" role="status">Loading public snapshot…</p></div></section><div class="wrap live-main"><div class="live-bar"><label>Find a documented actor<input id="actor-search" type="search" placeholder="Search name, alias, or ATT&CK ID" maxlength="80" list="actor-options"></label><datalist id="actor-options"></datalist><button id="actor-find" type="button">Find actor</button><span id="graph-count" role="status"></span></div><div class="live-layout"><section class="live-panel"><h2>Investigation canvas</h2><p>Click a node to recenter. The first ring shows documented direct relationships; click a connected node to expand its neighborhood.</p><div class="graph-legend"><span style="--dot:#0057d6">Actor</span><span style="--dot:#9669df">Campaign</span><span style="--dot:#e15c6b">Malware</span><span style="--dot:#cf9f49">Tool</span><span style="--dot:#38a9aa">Technique</span><span style="--dot:#d95364">CVE</span><span style="--dot:#70b66d">Sector</span><span style="--dot:#e1aa4f">Incident</span></div><svg id="graph-canvas" class="graph-canvas" viewBox="0 0 900 600" role="img" aria-label="Interactive threat relationship graph"></svg><div class="live-bar"><button id="graph-more" type="button">Show more relationships</button><button id="graph-back" type="button">Back to actor</button></div></section><aside class="live-panel"><h2>Entity dossier</h2><div id="graph-detail" class="live-detail"></div><div id="graph-relationships"></div></aside></div><section class="live-section"><h2>Evidence and coverage</h2><div class="coverage-grid"><article><strong>Campaigns</strong><small>ATT&CK attributed-to relationships.</small></article><article><strong>Malware and tools</strong><small>ATT&CK uses relationships.</small></article><article><strong>ATT&CK techniques</strong><small>Observed procedures in ATT&CK.</small></article><article><strong>CVEs, sectors, incidents</strong><small>Shown only when a direct, cited advisory supports the link. Coverage is selective.</small></article></div><p class="live-note">ATT&CK records historical knowledge, not present-day activity. Shared techniques do not prove that an actor exploited a CVE or caused an incident. <a href="https://attack.mitre.org/resources/attack-data-and-tools/">MITRE data and attribution ↗</a></p><p class="live-note">© 2026 The MITRE Corporation. This work is reproduced and distributed with the permission of The MITRE Corporation. <a href="mitre-license.txt">ATT&CK license ↗</a></p></section></div></main><footer><div class="wrap footer-inner"><div><strong>1DOTQ <span>THREAT INTEL</span></strong><p>Source-backed intelligence for defenders.</p></div><div><a href="sources.html">Sources and methods ↗</a><small>Private editorial tools stay internal.</small></div></div></footer></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0B1F3B">
+  <meta name="description" content="Explore cited relationships among threat actors, campaigns, malware, techniques, vulnerabilities, and incidents.">
+  <title>Threat Graph Explorer | 1DOTQ Threat Intel</title>
+  <link rel="canonical" href="https://1dotq.github.io/threat-intel/graph.html">
+  <link rel="stylesheet" href="style.css?v=20261117-dark">
+  <link rel="stylesheet" href="dark.css?v=5">
+  <link rel="stylesheet" href="research.css?v=2">
+  <link rel="stylesheet" href="live-tools.css?v=2">
+  <link rel="stylesheet" href="graph.css?v=1">
+  <link rel="icon" type="image/png" href="brand-dark-v1.png">
+  <script defer src="graph.js?v=4"></script>
+</head>
+<body>
+  <a class="skip-link" href="#live-main">Skip to Threat Graph Explorer</a>
+  <header><div class="nav wrap">
+    <a class="brand" href="index.html" aria-label="1DOTQ home"><img src="brand-dark-v1.png" alt="1DOTQ Threat Intel" width="150" height="150"></a>
+    <nav aria-label="Main navigation"><a href="today.html">Today</a><a href="index.html#catalog">KEV catalog</a><a href="map.html">Live map</a><a href="graph.html" aria-current="page">Threat graph</a><a href="outages.html">Outages</a><details class="nav-more"><summary>More ▾</summary><div><a href="signals.html">Signals</a><a href="explore.html">Explore</a><a href="rankings.html">Rankings</a><a href="compare.html">Compare CVEs</a><a href="watchlist.html">Watchlist</a><a href="sources.html">Sources</a><a href="methodology.html">Methodology</a></div></details></nav>
+  </div></header>
+  <main id="live-main" class="wrap graph-workspace">
+    <section class="graph-intro">
+      <h1>Threat Graph Explorer</h1>
+      <p>Trace documented relationships between actors, campaigns, malware, CVEs, and incidents.</p>
+      <p class="live-stamp" id="live-stamp" role="status">Loading the public graph…</p>
+    </section>
+
+    <section class="graph-controls" aria-label="Search and filter the graph">
+      <form id="graph-search" class="live-bar graph-search">
+        <label for="actor-search">Find an entity
+          <input id="actor-search" list="actor-options" placeholder="APT29, Cozy Bear, or CVE ID" autocomplete="off">
+          <datalist id="actor-options"></datalist>
+        </label>
+        <button id="actor-find" type="submit">Search</button>
+      </form>
+      <div id="graph-matches" class="graph-matches" hidden></div>
+      <div class="live-bar graph-filters">
+        <label for="graph-type">Connected entity
+          <select id="graph-type">
+            <option value="">All types</option>
+            <option value="actor">Threat actors</option><option value="campaign">Campaigns</option>
+            <option value="malware">Malware</option><option value="tool">Tools</option>
+            <option value="technique">ATT&amp;CK techniques</option><option value="vulnerability">CVEs</option>
+            <option value="sector">Sectors</option><option value="incident">Incidents</option>
+          </select>
+        </label>
+        <label for="graph-source">Evidence publisher<select id="graph-source"><option value="">All publishers</option></select></label>
+        <div class="graph-time">
+          <label for="graph-date">Evidence dated through <input id="graph-date" type="date" aria-describedby="graph-date-note" disabled></label>
+          <label class="graph-slider-label" for="graph-slider"><span class="graph-sr-only">Move the evidence cutoff date</span><input id="graph-slider" type="range" disabled></label>
+        </div>
+        <button id="graph-reset" type="button">Clear filters</button>
+      </div>
+      <p id="graph-date-note" class="graph-help">The cutoff uses dated citations in this snapshot. <a href="methodology.html#graph-evidence">How dates are assigned</a></p>
+    </section>
+
+    <nav class="graph-trail" id="graph-trail" aria-label="Investigation path"></nav>
+    <div class="graph-layout">
+      <section class="live-panel graph-stage" aria-labelledby="graph-stage-title">
+        <div class="graph-stage-header">
+          <div><h2 id="graph-stage-title" tabindex="-1">Connections</h2><p id="graph-count" role="status"></p></div>
+          <button class="live-button" id="graph-back" type="button" disabled>Back one step</button>
+        </div>
+        <p class="graph-help" id="graph-guide">Select a node to explore its connections. Select a line to open its citations.</p>
+        <svg id="graph-canvas" class="graph-canvas" viewBox="0 0 760 500" role="group" aria-label="Interactive threat relationships" aria-describedby="graph-guide"></svg>
+        <div class="graph-legend" aria-label="Relationship line styles">
+          <span class="graph-key">One publisher</span><span class="graph-key multiple">Multiple publishers</span><span class="graph-key unresolved">Publisher unavailable</span>
+        </div>
+      </section>
+      <aside class="live-panel graph-sidebar" aria-label="Entity and relationship evidence">
+        <div id="graph-detail" class="live-detail"></div>
+        <p id="graph-active-edge" class="graph-help" role="status" hidden></p>
+        <h2 id="graph-evidence-title" tabindex="-1">Relationship evidence</h2>
+        <div id="graph-relationships" aria-labelledby="graph-evidence-title"></div>
+        <div class="graph-pagination">
+          <button class="live-button" id="graph-prev" type="button" hidden>Previous relationships</button>
+          <button class="live-button" id="graph-more" type="button" hidden>Next relationships</button>
+        </div>
+      </aside>
+    </div>
+    <footer class="graph-credits">
+      <p><a href="methodology.html#graph-evidence">Graph methodology</a> · <a href="https://attack.mitre.org/resources/attack-data-and-tools/">MITRE dataset</a> · <a href="mitre-license.txt">ATT&amp;CK license</a></p>
+      <small>© 2026 The MITRE Corporation. This work is reproduced and distributed with the permission of The MITRE Corporation.</small>
+    </footer>
+  </main>
+</body>
+</html>

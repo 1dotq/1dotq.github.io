@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0B1F3B">
+  <meta name="description" content="How 1DOTQ collects evidence, assesses urgency, and reports changes.">
+  <title>Methodology | 1DOTQ Threat Intel</title>
+  <link rel="stylesheet" href="style.css?v=20261117-dark">
+  <link rel="stylesheet" href="dark.css?v=5">
+  <link rel="stylesheet" href="research.css?v=2">
+  <link rel="icon" type="image/png" href="brand-dark-v1.png">
+  <link rel="canonical" href="https://1dotq.github.io/threat-intel/methodology.html">
+</head>
+<body>
+  <a class="skip-link" href="#method-main">Skip to methodology</a>
+  <header><div class="nav wrap">
+    <a class="brand" href="index.html" aria-label="1DOTQ home"><img src="brand-dark-v1.png" alt="1DOTQ Threat Intel" width="150" height="150"></a>
+    <nav aria-label="Main navigation"><a href="today.html">Today</a><a href="index.html#catalog">KEV catalog</a><a href="graph.html">Threat graph</a><a href="outages.html">Outages</a><a href="sources.html">Source health</a><a href="methodology.html" aria-current="page">Methodology</a></nav>
+  </div></header>
+  <main id="method-main">
+    <div class="research-hero"><div class="wrap">
+      <h1>Methodology</h1>
+      <p>How we collect evidence, assess vulnerability urgency, and record changes.</p>
+    </div></div>
+    <div class="wrap research-main">
+      <section class="research-section">
+        <h2>Sources and editorial selection</h2>
+        <p>CISA KEV supplies the known-exploited catalog. CVE Program records identify vulnerabilities and contribute descriptions and affected versions. Vendor advisories provide remediation guidance. Where collected, NVD, GitHub advisories and OSV add technical and package context. FIRST EPSS estimates the likelihood of exploitation activity over the next 30 days.</p>
+        <p>Social coverage prioritizes recent critical CVEs affecting major or widely used products, with preference for documented exploitation. The public catalog covers the published CISA snapshot. Collection uses bounded source windows and selective enrichment, so check the latest successful collection time and the original advisory.</p>
+        <div class="research-actions"><a href="sources.html">Check source health</a><a href="signals.xml">Subscribe to public signals</a></div>
+      </section>
+      <section id="threat-level" class="research-section">
+        <h2>Threat Level · Version 1</h2>
+        <p>Threat Level is a public evidence score for CVEs. Use it to decide which records to investigate first, then check your affected versions, exposure, and current mitigation options.</p>
+        <ul>
+          <li><strong>Technical severity · 0–40 points.</strong> Multiply the displayed CVSS base score by four and round to the nearest point.</li>
+          <li><strong>Exploitation evidence · 0–60 points.</strong> A CISA KEV listing contributes 60 points. Otherwise, multiply the available EPSS probability (0–1) by 35 and round. A missing input adds no points and makes the score partial.</li>
+          <li><strong>Labels.</strong> Critical starts at 90, High at 60, and Elevated at 30. A complete score below 30 is Low. A partial score below 30 is Insufficient evidence.</li>
+        </ul>
+        <p><strong>Example.</strong> CVSS 9.8 contributes 39 points. A KEV listing contributes 60, giving 99 points and a Critical label. Without KEV and EPSS, the result would be 39 partial points and an Elevated label.</p>
+        <p>The EPSS route tops out at 75 points. A Critical Threat Level requires a KEV listing and a CVSS score that contributes at least 30 points. Scores reflect the current snapshot. Reach, the number of affected people, and patch availability are outside this version of the score. EPSS percentages are probabilities, while percentiles describe relative rank.</p>
+      </section>
+      <section id="graph-evidence" class="research-section">
+        <h2>Graph evidence and outage signals</h2>
+        <p>The Threat Graph Explorer presents documented MITRE ATT&amp;CK relationships and selected directly cited public assertions. Historical records establish what a source documented at a point in time. Shared techniques and overlapping dates are insufficient for attributing an incident.</p>
+        <p>Each connection shows its cited publishers. Multiple publishers may rely on the same underlying evidence. A jointly authored advisory counts as one publication. Shared CVE identifiers resolve to one node, and ATT&amp;CK aliases remain attached to their original group records. Search offers a choice when a name matches multiple entities.</p>
+        <p>The date filter shows citations in the current export with an ATT&amp;CK relationship record creation date or advisory publication date on or before the cutoff. Undated citations are excluded when a cutoff is selected. These dates describe source records, and the filter cannot recreate what the graph looked like then. Where ATT&amp;CK supplies a relationship start or end date, the citation shows it separately.</p>
+        <p><a href="https://attack.mitre.org/resources/attack-data-and-tools/">MITRE ATT&amp;CK data</a> · <a href="https://docs.oasis-open.org/cti/stix/v2.1/os/stix-v2.1-os.html">STIX date definitions</a></p>
+        <p>Provider status updates describe the scope and state of a reported disruption. IODA measures internet reachability. An IODA alert alone leaves the cause unknown. For example, when a provider reports a regional object-storage disruption and identifies a software issue, that provider statement supplies the cause.</p>
+      </section>
+      <section class="research-section">
+        <h2>Revisions and corrections</h2>
+        <p>The CVE page displays up to 12 retained public source events. Material changes to selected fields show the previous and revised values side by side. “Observed” is when 1DOTQ collected the revision. Source dates appear when the source provides a relevant timestamp.</p>
+        <p>The rendered comparison reflects the captured snapshots. Advisory withdrawals appear when captured by the exporter. Consult the original notice for the full wording and any corrections after the latest collection.</p>
+      </section>
+    </div>
+  </main>
+  <footer><div class="wrap"><strong>1DOTQ THREAT INTEL</strong></div></footer>
+</body>
+</html>
